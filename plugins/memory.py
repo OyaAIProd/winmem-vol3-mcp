@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import malfind
+from volatility3.plugins.windows import malfind, vadinfo
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -18,6 +18,13 @@ def run_malfind(session: Session) -> dict:
     return {"plugin": "malfind", "results": parse_treegrid(treegrid)}
 
 
+def run_vadinfo(session: Session) -> dict:
+    """Run windows.vadinfo and return VAD (Virtual Address Descriptor) details."""
+    treegrid = run_plugin(session, vadinfo.VadInfo)
+    return {"plugin": "vadinfo", "results": parse_treegrid(treegrid)}
+
+
 REGISTRY = {
     "malfind": run_malfind,
+    "vadinfo": run_vadinfo,
 }

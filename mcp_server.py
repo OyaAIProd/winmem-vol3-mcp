@@ -503,6 +503,48 @@ def windows_malfind() -> dict:
 
 
 @mcp.tool()
+def windows_vadinfo() -> dict:
+    """
+    Run the vadinfo plugin to list detailed Virtual Address Descriptor (VAD)
+    information for each process, including memory-mapped files.
+
+    Use this tool when the user asks about:
+    - Virtual memory layout or address space of a process
+    - Memory-mapped files or sections loaded by a process
+    - VAD tree entries, memory protection, or commit charge
+    - Which files are mapped into a process's address space
+    - Detailed memory region metadata beyond what malfind shows
+
+    Returns a dict with:
+    - "plugin": "vadinfo"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Offset": VAD node offset (str, hex),
+        "Start VPN": start virtual page number (str, hex),
+        "End VPN": end virtual page number (str, hex),
+        "Tag": VAD pool tag (str),
+        "Protection": memory protection flags (str),
+        "CommitCharge": number of committed pages (int),
+        "PrivateMemory": whether memory is private (int),
+        "Parent": parent VAD node offset (str, hex),
+        "File": path of the memory-mapped file if any (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - The File field reveals DLLs and executables mapped into memory that
+      may not appear in windows_dlllist (e.g., manually mapped images)
+    - Compare VAD protection flags with expected values: legitimate code
+      sections are typically PAGE_EXECUTE_READ, not PAGE_EXECUTE_READWRITE
+    - Use windows_malfind for focused detection of injected regions; use
+      this tool for comprehensive VAD enumeration
+    - Cross-reference with windows_handles (Type=Section) to identify
+      shared memory mappings between processes
+    """
+    return session.run_plugin("vadinfo")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
