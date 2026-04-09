@@ -56,6 +56,12 @@ Claude will automatically call `get_image_info` and present the analysis results
 
 ![Memory Image Identification](png/imageinfo.png)
 
+You can then ask follow-up questions to dig deeper:
+
+> *"Could you list all running processes and flag any that look suspicious?"*
+
+![Process List](png/pslist.png)
+
 ## Available Tools
 
 | MCP Tool | Volatility3 Plugin | Description |
