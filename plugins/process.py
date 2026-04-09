@@ -1,0 +1,50 @@
+"""Process analysis plugin wrappers (pslist, psscan, pstree, ...)."""
+
+from __future__ import annotations
+
+from typing import Any, TYPE_CHECKING
+
+from volatility3.plugins.windows import pslist, psscan, pstree
+
+from plugins._common import _serialize_value, parse_treegrid, run_plugin
+
+if TYPE_CHECKING:
+    from session import Session
+
+
+def run_pslist(session: Session) -> dict:
+    """Run windows.pslist and return structured process list."""
+    treegrid = run_plugin(session, pslist.PsList)
+    return {"plugin": "pslist", "results": parse_treegrid(treegrid)}
+
+
+def run_psscan(session: Session) -> dict:
+    """Run windows.psscan and return process list found by pool scanning."""
+    treegrid = run_plugin(session, psscan.PsScan)
+    return {"plugin": "psscan", "results": parse_treegrid(treegrid)}
+
+
+def run_pstree(session: Session) -> dict:
+    """Run windows.pstree and return process tree with depth info."""
+    treegrid = run_plugin(session, pstree.PsTree)
+    col_names = [col.name for col in treegrid.columns]
+    rows: list[dict[str, Any]] = []
+
+    def visitor(node, accumulator):
+        row = {
+            name: _serialize_value(node.values[i])
+            for i, name in enumerate(col_names)
+        }
+        row["depth"] = node.path_depth
+        accumulator.append(row)
+        return accumulator
+
+    treegrid.populate(visitor, rows)
+    return {"plugin": "pstree", "results": rows}
+
+
+REGISTRY = {
+    "pslist": run_pslist,
+    "psscan": run_psscan,
+    "pstree": run_pstree,
+}
