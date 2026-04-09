@@ -426,6 +426,41 @@ def windows_sessions() -> dict:
 
 
 @mcp.tool()
+def windows_thrdscan() -> dict:
+    """
+    Run the thrdscan plugin to scan for thread objects in physical memory
+    using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Threads running on the system or within a specific process
+    - Thread start addresses or entry points
+    - Hidden or orphaned threads not linked to any process
+    - Thread creation and exit timestamps
+    - Thread injection or suspicious thread activity
+
+    Returns a dict with:
+    - "plugin": "thrdscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the ETHREAD structure (str, hex),
+        "PID": owning process ID (int),
+        "TID": thread ID (int),
+        "StartAddress": thread start address (str, hex),
+        "CreateTime": thread creation timestamp (str),
+        "ExitTime": thread exit timestamp (str or None)
+
+    Forensic context:
+    - Threads with start addresses outside any known module range may
+      indicate injected code (remote thread injection via CreateRemoteThread)
+    - Orphaned threads (PID referencing a non-existent process) suggest the
+      parent process was terminated or unlinked
+    - Compare thread start addresses against windows_dlllist module ranges
+      to identify threads executing from injected or unmapped memory
+    - Use windows_pslist to resolve PID to process name for context
+    """
+    return session.run_plugin("thrdscan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
