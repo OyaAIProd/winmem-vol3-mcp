@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from volatility3.plugins.windows import pslist, psscan, pstree
+from volatility3.plugins.windows import cmdline, pslist, psscan, pstree
 
 from plugins._common import _serialize_value, parse_treegrid, run_plugin
 
@@ -43,7 +43,14 @@ def run_pstree(session: Session) -> dict:
     return {"plugin": "pstree", "results": rows}
 
 
+def run_cmdline(session: Session) -> dict:
+    """Run windows.cmdline and return process command line arguments."""
+    treegrid = run_plugin(session, cmdline.CmdLine)
+    return {"plugin": "cmdline", "results": parse_treegrid(treegrid)}
+
+
 REGISTRY = {
+    "cmdline": run_cmdline,
     "pslist": run_pslist,
     "psscan": run_psscan,
     "pstree": run_pstree,

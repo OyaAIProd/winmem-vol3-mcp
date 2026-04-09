@@ -175,6 +175,38 @@ def windows_pstree() -> dict:
 
 
 @mcp.tool()
+def windows_cmdline() -> dict:
+    """
+    Run the cmdline plugin to extract command line arguments for each process.
+
+    Use this tool when the user asks about:
+    - Command line arguments or parameters passed to a process
+    - How a process was launched or invoked
+    - Suspicious command line patterns (encoded PowerShell, LOLBins, etc.)
+    - What commands were executed on the system
+    - Process execution context or launch parameters
+
+    Returns a dict with:
+    - "plugin": "cmdline"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Args": full command line string (str)
+
+    Forensic context:
+    - Encoded PowerShell commands (powershell -enc ...) are a strong malware
+      indicator and should be decoded for further analysis
+    - LOLBin abuse patterns (certutil -urlcache, mshta, regsvr32, rundll32
+      with URLs) suggest living-off-the-land techniques
+    - Use windows_pslist to get full process metadata (PPID, timestamps) for
+      processes with suspicious command lines
+    - Compare with windows_dlllist to correlate loaded modules against the
+      command line intent (e.g., unexpected DLLs in a benign-looking process)
+    """
+    return session.run_plugin("cmdline")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
