@@ -5,7 +5,7 @@ from pathlib import Path
 
 from volatility3.framework import contexts, interfaces
 from volatility3.framework.interfaces.configuration import HierarchicalDict, path_join
-from plugins.windows import PLUGIN_REGISTRY, BASE_CONFIG_PATH
+from plugins import PLUGIN_REGISTRY, BASE_CONFIG_PATH
 
 
 class Session:
