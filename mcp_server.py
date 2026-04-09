@@ -1654,6 +1654,38 @@ def windows_truecrypt() -> dict:
 
 
 @mcp.tool()
+def windows_getservicesids() -> dict:
+    """
+    Run the getservicesids plugin to generate a mapping of Windows service
+    names to their computed Security Identifiers (SIDs).
+
+    Use this tool when the user asks about:
+    - Service SIDs or service account security identifiers
+    - Mapping a SID back to a Windows service name
+    - Which services have associated security identifiers
+    - Service-level access control or permission analysis
+    - Resolving unknown SIDs found in process tokens
+
+    Returns a dict with:
+    - "plugin": "getservicesids"
+    - "results": list of dicts, each containing:
+        "SID": computed service SID string (str),
+        "Service": Windows service name (str)
+
+    Forensic context:
+    - Service SIDs (S-1-5-80-...) are computed from service names and
+      used for per-service access control; this tool provides the mapping
+    - Use this output to resolve unknown SIDs found in windows_getsids
+      results, identifying which service a process token belongs to
+    - Malware that installs itself as a service will have a computable
+      service SID that appears in this list
+    - Cross-reference with windows_registry_printkey on the Services
+      registry key to correlate service configurations with their SIDs
+    """
+    return session.run_plugin("getservicesids")
+
+
+@mcp.tool()
 def windows_statistics() -> dict:
     """
     Run the statistics plugin to display memory space statistics, showing

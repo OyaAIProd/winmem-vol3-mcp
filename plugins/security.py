@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import mbrscan, skeleton_key_check, truecrypt
+from volatility3.plugins.windows import getservicesids, mbrscan, skeleton_key_check, truecrypt
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -30,7 +30,14 @@ def run_mbrscan(session: Session) -> dict:
     return {"plugin": "mbrscan", "results": parse_treegrid(treegrid)}
 
 
+def run_getservicesids(session: Session) -> dict:
+    """Run windows.getservicesids and return service SID mappings."""
+    treegrid = run_plugin(session, getservicesids.GetServiceSIDs)
+    return {"plugin": "getservicesids", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
+    "getservicesids": run_getservicesids,
     "mbrscan": run_mbrscan,
     "skeleton_key_check": run_skeleton_key_check,
     "truecrypt": run_truecrypt,
