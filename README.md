@@ -17,6 +17,7 @@ An MCP (Model Context Protocol) server that wraps the [Volatility3](https://gith
 ## Installation
 
 Requires Python 3.10+ and [uv](https://docs.astral.sh/uv/). 
+
 Dependencies are managed via uv and pinned to [Volatility3 2.27.0](https://github.com/volatilityfoundation/volatility3/releases/tag/v2.27.0) (released 2026-01-30).
 
 ```bash
