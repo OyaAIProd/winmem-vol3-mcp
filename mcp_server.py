@@ -354,6 +354,42 @@ def windows_joblinks() -> dict:
 
 
 @mcp.tool()
+def windows_privileges() -> dict:
+    """
+    Run the privileges plugin to list token privileges for each process.
+
+    Use this tool when the user asks about:
+    - Process privileges or token permissions
+    - Privilege escalation indicators (SeDebugPrivilege, SeImpersonatePrivilege)
+    - Whether a process has elevated or dangerous privileges enabled
+    - Security token analysis for a specific process
+    - Enabled vs disabled privileges in a process context
+
+    Returns a dict with:
+    - "plugin": "privileges"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Value": privilege numeric value (int),
+        "Privilege": privilege name such as SeDebugPrivilege (str),
+        "Attributes": privilege state like Present/Enabled/Default (str),
+        "Description": human-readable description of the privilege (str)
+
+    Forensic context:
+    - SeDebugPrivilege enabled in a non-administrative process is a strong
+      indicator of privilege escalation or token manipulation
+    - SeImpersonatePrivilege and SeAssignPrimaryTokenPrivilege are commonly
+      abused in potato-style privilege escalation attacks
+    - Compare Attributes field: "Present, Enabled, Default" vs "Present" —
+      privileges that are enabled but not default may have been explicitly
+      activated by an attacker
+    - Use windows_getsids to correlate privilege levels with the actual
+      user/group SIDs owning the process token
+    """
+    return session.run_plugin("privileges")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

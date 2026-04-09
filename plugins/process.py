@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, pslist, psscan, pstree
+from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, privileges, pslist, psscan, pstree
 
 from plugins._common import _serialize_value, parse_treegrid, run_plugin
 
@@ -73,12 +73,19 @@ def run_joblinks(session: Session) -> dict:
     return {"plugin": "joblinks", "results": parse_treegrid(treegrid)}
 
 
+def run_privileges(session: Session) -> dict:
+    """Run windows.privileges and return process token privileges."""
+    treegrid = run_plugin(session, privileges.Privs)
+    return {"plugin": "privileges", "results": parse_treegrid(treegrid)}
+
+
 REGISTRY = {
     "cmdline": run_cmdline,
     "envars": run_envars,
     "getsids": run_getsids,
     "handles": run_handles,
     "joblinks": run_joblinks,
+    "privileges": run_privileges,
     "pslist": run_pslist,
     "psscan": run_psscan,
     "pstree": run_pstree,
