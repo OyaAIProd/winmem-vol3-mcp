@@ -1013,6 +1013,41 @@ def windows_driverirp() -> dict:
 
 
 @mcp.tool()
+def windows_drivermodule() -> dict:
+    """
+    Run the drivermodule plugin to detect drivers that are not backed by
+    a loaded kernel module, indicating potentially hidden rootkit drivers.
+
+    Use this tool when the user asks about:
+    - Hidden or orphaned driver modules
+    - Drivers without a corresponding loaded kernel module
+    - Rootkit driver detection or driver integrity checks
+    - Whether all active drivers map to legitimate modules
+    - Drivers that may have been loaded and then hidden
+
+    Returns a dict with:
+    - "plugin": "drivermodule"
+    - "results": list of dicts, each containing:
+        "Offset": driver object offset (str, hex),
+        "Known Exception": whether this is a known benign exception (bool),
+        "Driver Name": name of the driver (str),
+        "Service Key": registry service key for the driver (str),
+        "Alternative Name": alternative module name if found (str)
+
+    Forensic context:
+    - Drivers with no matching module in windows_modules and Known Exception
+      set to False are strong rootkit indicators
+    - Known Exception=True entries are legitimate drivers that are expected
+      to appear without a backing module (e.g., certain Microsoft drivers)
+    - Use windows_driverscan to get the full driver object details for any
+      suspicious entries discovered here
+    - Cross-reference with windows_callbacks and windows_ssdt to determine
+      if the hidden driver has hooked any kernel functions
+    """
+    return session.run_plugin("drivermodule")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets
