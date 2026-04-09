@@ -1545,6 +1545,147 @@ def windows_registry_certificates() -> dict:
 
 
 @mcp.tool()
+def windows_skeleton_key_check() -> dict:
+    """
+    Run the skeleton_key_check plugin to detect the Skeleton Key malware
+    by scanning lsass.exe for patched authentication functions.
+
+    Use this tool when the user asks about:
+    - Skeleton Key malware detection
+    - LSASS authentication tampering or credential theft
+    - Active Directory backdoor indicators
+    - Patched rc4HmacInitialize or rc4HmacDecrypt functions
+    - Domain controller compromise indicators
+
+    Returns a dict with:
+    - "plugin": "skeleton_key_check"
+    - "results": list of dicts, each containing:
+        "PID": process ID of lsass.exe (int),
+        "Process": process name (str),
+        "Skeleton Key Found": whether the Skeleton Key patch was detected (bool),
+        "rc4HmacInitialize": address of rc4HmacInitialize function (str, hex),
+        "rc4HmacDecrypt": address of rc4HmacDecrypt function (str, hex)
+
+    Forensic context:
+    - Skeleton Key is an in-memory patch to LSASS that allows attackers to
+      authenticate as any user with a master password, without modifying
+      actual user credentials
+    - A True value in "Skeleton Key Found" is a definitive indicator of
+      compromise on a domain controller
+    - Use windows_pslist to verify that lsass.exe is running with expected
+      parameters and parent process (should be wininit.exe)
+    - Cross-reference with windows_malfind to check for other code
+      injections in the lsass.exe process
+    """
+    return session.run_plugin("skeleton_key_check")
+
+
+@mcp.tool()
+def windows_mbrscan() -> dict:
+    """
+    Run the mbrscan plugin to scan for and parse potential Master Boot
+    Records (MBRs) in the memory image.
+
+    Use this tool when the user asks about:
+    - Master Boot Records or MBR analysis
+    - Bootkit or boot-level malware detection
+    - Disk partition layout found in memory
+    - Boot code integrity or MBR tampering
+    - Disk signatures or bootable partition indicators
+
+    Returns a dict with:
+    - "plugin": "mbrscan"
+    - "results": list of dicts, each containing:
+        "Potential MBR at Physical Offset": physical offset (str, hex),
+        "Disk Signature": disk signature identifier (str),
+        "Bootcode MD5": MD5 hash of the boot code section (str),
+        "Full MBR MD5": MD5 hash of the entire MBR (str),
+        "PartitionIndex": partition table entry index (int),
+        "Bootable": whether the partition is marked bootable (bool),
+        "PartitionType": filesystem or partition type (str),
+        "SectorInSize": partition size in sectors (str, hex),
+        "Disasm": disassembly of the boot code (str)
+
+    Forensic context:
+    - Compare Bootcode MD5 against known-good MBR hashes for the OS
+      version; mismatches may indicate bootkit infection
+    - Bootkits like TDL4, Rovnix, or Carberp modify the MBR to load
+      malicious code before the operating system starts
+    - Multiple MBR candidates at different offsets may indicate previous
+      MBR contents preserved in memory after modification
+    - Use windows_info to identify the OS version and determine the
+      expected boot code for comparison
+    """
+    return session.run_plugin("mbrscan")
+
+
+@mcp.tool()
+def windows_truecrypt() -> dict:
+    """
+    Run the truecrypt plugin to search for cached TrueCrypt passphrases
+    remaining in memory.
+
+    Use this tool when the user asks about:
+    - TrueCrypt passphrases or encryption keys in memory
+    - Full-disk encryption password recovery
+    - Cached encryption credentials from TrueCrypt volumes
+    - Evidence of encrypted volume usage on the system
+    - Decryption key extraction for forensic access
+
+    Returns a dict with:
+    - "plugin": "truecrypt"
+    - "results": list of dicts, each containing:
+        "Offset": memory offset where the passphrase was found (str, hex),
+        "Length": length of the passphrase in bytes (int),
+        "Password": the cached passphrase string (str)
+
+    Forensic context:
+    - TrueCrypt caches passphrases in kernel memory while volumes are
+      mounted; this plugin can recover them if the volume was mounted
+      at the time of capture
+    - Recovered passphrases can be used to decrypt TrueCrypt volumes for
+      further forensic examination of their contents
+    - Also works with VeraCrypt in some cases, as it shares the same
+      passphrase caching mechanism
+    - Use windows_pslist to check if TrueCrypt.exe or VeraCrypt.exe
+      processes were running at the time of capture
+    """
+    return session.run_plugin("truecrypt")
+
+
+@mcp.tool()
+def windows_getservicesids() -> dict:
+    """
+    Run the getservicesids plugin to generate a mapping of Windows service
+    names to their computed Security Identifiers (SIDs).
+
+    Use this tool when the user asks about:
+    - Service SIDs or service account security identifiers
+    - Mapping a SID back to a Windows service name
+    - Which services have associated security identifiers
+    - Service-level access control or permission analysis
+    - Resolving unknown SIDs found in process tokens
+
+    Returns a dict with:
+    - "plugin": "getservicesids"
+    - "results": list of dicts, each containing:
+        "SID": computed service SID string (str),
+        "Service": Windows service name (str)
+
+    Forensic context:
+    - Service SIDs (S-1-5-80-...) are computed from service names and
+      used for per-service access control; this tool provides the mapping
+    - Use this output to resolve unknown SIDs found in windows_getsids
+      results, identifying which service a process token belongs to
+    - Malware that installs itself as a service will have a computable
+      service SID that appears in this list
+    - Cross-reference with windows_registry_printkey on the Services
+      registry key to correlate service configurations with their SIDs
+    """
+    return session.run_plugin("getservicesids")
+
+
+@mcp.tool()
 def windows_statistics() -> dict:
     """
     Run the statistics plugin to display memory space statistics, showing

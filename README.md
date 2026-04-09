@@ -78,7 +78,7 @@ You can then ask follow-up questions to dig deeper:
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan | 4 / 4 |
 | Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates | 5 / 5 |
 | System Information | info, statistics, crashinfo | 3 / 3 |
-| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids | 0 / 4 |
+| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids | 4 / 4 |
 
 ## Architecture
 

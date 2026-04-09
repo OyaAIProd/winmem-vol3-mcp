@@ -100,15 +100,15 @@ Registry sub-plugins use `windows_registry_{name}`.
 
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
-| `windows.skeleton_key_check` | `windows_skeleton_key_check` | Planned | Detect Skeleton Key malware |
-| `windows.mbrscan` | `windows_mbrscan` | Planned | Scan for Master Boot Records |
-| `windows.truecrypt` | `windows_truecrypt` | Planned | Find TrueCrypt cached passphrases |
-| `windows.getservicesids` | `windows_getservicesids` | Planned | List process token service SIDs |
+| `windows.skeleton_key_check` | `windows_skeleton_key_check` | Done | Detect Skeleton Key malware |
+| `windows.mbrscan` | `windows_mbrscan` | Done | Scan for Master Boot Records |
+| `windows.truecrypt` | `windows_truecrypt` | Done | Find TrueCrypt cached passphrases |
+| `windows.getservicesids` | `windows_getservicesids` | Done | List process token service SIDs |
 
 ---
 
 ## Summary
 
 - **Total plugins**: 49
-- **Done**: 45 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, File 4, Registry 5, System Info 3)
-- **Planned**: 4
+- **Done**: 49 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, File 4, Registry 5, System Info 3, Security 4)
+- **Planned**: 0
