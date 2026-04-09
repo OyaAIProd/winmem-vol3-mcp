@@ -12,6 +12,7 @@ An MCP (Model Context Protocol) server that wraps the [Volatility3](https://gith
 - **Result caching** -- plugin results are cached per session to avoid redundant computation
 - **Config caching** -- kernel/layer configuration is saved to `{image}.vol3cfg.json` on first run, skipping expensive PDB download and layer scanning on subsequent starts
 - **Forensic-aware tool docstrings** -- each MCP tool carries a three-layer docstring (trigger patterns, return structure, forensic context) that guides the LLM to select the right tool, interpret results accurately, and autonomously chain multi-step analysis workflows
+- **Multilingual natural language queries** -- while the codebase and tool outputs are in English, users can ask questions in any language Claude supports (e.g., Korean, Japanese, Chinese, German, etc.) and receive analysis results in the same language
 
 ## Installation
 
@@ -47,23 +48,13 @@ Add the following to your `claude_desktop_config.json`:
 
 ### Quick Test
 
-After configuring Claude Desktop, ask Claude to identify the memory image. Claude will call `get_image_info` and return system information:
+After configuring Claude Desktop, try asking:
 
-```json
-{
-  "plugin": "info",
-  "results": {
-    "Kernel Base": "0xf80002a52000",
-    "DTB": "0x187000",
-    "Is64Bit": true,
-    "IsPAE": false,
-    "NTBuildLab": "7601.17514.amd64fre.win7sp1_rtm.",
-    "NtMajorVersion": 6,
-    "NtMinorVersion": 1,
-    "NtProductType": "NtProductWinNt"
-  }
-}
-```
+> *"Please, identify the memory image."*
+
+Claude will automatically call `get_image_info` and present the analysis results in a conversational format:
+
+![Memory Image Identification](png/imageinfo.png)
 
 ## Available Tools
 
