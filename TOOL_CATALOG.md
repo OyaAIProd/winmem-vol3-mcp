@@ -73,10 +73,10 @@ Registry sub-plugins use `windows_registry_{name}`.
 
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
-| `windows.filescan` | `windows_filescan` | Planned | Scan for file objects |
-| `windows.dumpfiles` | `windows_dumpfiles` | Planned | Dump cached file contents |
-| `windows.symlinkscan` | `windows_symlinkscan` | Planned | Scan for symbolic links |
-| `windows.mutantscan` | `windows_mutantscan` | Planned | Scan for mutexes |
+| `windows.filescan` | `windows_filescan` | Done | Scan for file objects |
+| `windows.dumpfiles` | `windows_dumpfiles` | Done | Dump cached file contents |
+| `windows.symlinkscan` | `windows_symlinkscan` | Done | Scan for symbolic links |
+| `windows.mutantscan` | `windows_mutantscan` | Done | Scan for mutexes |
 
 ## Registry Analysis
 
@@ -110,5 +110,5 @@ Registry sub-plugins use `windows_registry_{name}`.
 ## Summary
 
 - **Total plugins**: 49
-- **Done**: 34 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, System Info 1)
-- **Planned**: 15
+- **Done**: 38 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, File 4, System Info 1)
+- **Planned**: 11
