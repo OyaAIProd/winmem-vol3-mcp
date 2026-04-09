@@ -1432,6 +1432,43 @@ def windows_registry_hivescan() -> dict:
 
 
 @mcp.tool()
+def windows_registry_printkey() -> dict:
+    """
+    Run the registry.printkey plugin to print registry keys, subkeys,
+    and values from loaded registry hives.
+
+    Use this tool when the user asks about:
+    - Registry key values or data for a specific path
+    - Contents of Run/RunOnce keys (persistence mechanisms)
+    - Installed software, services, or startup entries in the registry
+    - Specific registry paths like HKLM\\SYSTEM\\CurrentControlSet\\Services
+    - Registry-based forensic artifacts (MRU lists, typed URLs, etc.)
+
+    Returns a dict with:
+    - "plugin": "registry.printkey"
+    - "results": list of dicts, each containing:
+        "Last Write Time": last modification timestamp of the key (str),
+        "Hive Offset": offset of the containing hive (str, hex),
+        "Type": entry type, either Key or Value (str),
+        "Key": registry key path (str),
+        "Name": value name or subkey name (str),
+        "Data": value data content (str),
+        "Volatile": whether the key is volatile/memory-only (bool)
+
+    Forensic context:
+    - Persistence keys: HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run,
+      HKLM\\SYSTEM\\CurrentControlSet\\Services — check for malware entries
+    - Last Write Time indicates when the key was last modified, useful
+      for timeline analysis and correlating with process activity
+    - Volatile keys (Volatile=true) exist only in memory and are lost on
+      reboot; malware may use these to avoid on-disk evidence
+    - Use windows_registry_hivelist first to identify hive offsets, then
+      this tool to explore specific keys within those hives
+    """
+    return session.run_plugin("registry.printkey")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
