@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from volatility3.plugins.windows import cmdline, envars, pslist, psscan, pstree
+from volatility3.plugins.windows import cmdline, envars, getsids, pslist, psscan, pstree
 
 from plugins._common import _serialize_value, parse_treegrid, run_plugin
 
@@ -55,9 +55,16 @@ def run_envars(session: Session) -> dict:
     return {"plugin": "envars", "results": parse_treegrid(treegrid)}
 
 
+def run_getsids(session: Session) -> dict:
+    """Run windows.getsids and return SIDs for each process."""
+    treegrid = run_plugin(session, getsids.GetSIDs)
+    return {"plugin": "getsids", "results": parse_treegrid(treegrid)}
+
+
 REGISTRY = {
     "cmdline": run_cmdline,
     "envars": run_envars,
+    "getsids": run_getsids,
     "pslist": run_pslist,
     "psscan": run_psscan,
     "pstree": run_pstree,

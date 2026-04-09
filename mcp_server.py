@@ -241,6 +241,40 @@ def windows_envars() -> dict:
 
 
 @mcp.tool()
+def windows_getsids() -> dict:
+    """
+    Run the getsids plugin to list Security Identifiers (SIDs) associated
+    with each process token.
+
+    Use this tool when the user asks about:
+    - Which user or account owns a process
+    - Process security identifiers or SIDs
+    - Privilege escalation or token manipulation evidence
+    - Whether a process is running as SYSTEM, Administrator, or a regular user
+    - User account context of running processes
+
+    Returns a dict with:
+    - "plugin": "getsids"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "SID": security identifier string (str),
+        "Name": human-readable SID name (str)
+
+    Forensic context:
+    - Processes running under unexpected SIDs (e.g., a user-launched process
+      with SYSTEM SID) may indicate privilege escalation or token theft
+    - Well-known SIDs: S-1-5-18 (SYSTEM), S-1-5-19 (LOCAL SERVICE),
+      S-1-5-20 (NETWORK SERVICE) — compare against expected process owners
+    - Use windows_pslist to identify the process, then this tool to verify
+      its security context
+    - Cross-reference with windows_privileges to build a complete picture
+      of a process's security posture
+    """
+    return session.run_plugin("getsids")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
