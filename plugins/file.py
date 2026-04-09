@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import filescan
+from volatility3.plugins.windows import dumpfiles, filescan
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -18,6 +18,13 @@ def run_filescan(session: Session) -> dict:
     return {"plugin": "filescan", "results": parse_treegrid(treegrid)}
 
 
+def run_dumpfiles(session: Session) -> dict:
+    """Run windows.dumpfiles and return cached file dump metadata."""
+    treegrid = run_plugin(session, dumpfiles.DumpFiles)
+    return {"plugin": "dumpfiles", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
+    "dumpfiles": run_dumpfiles,
     "filescan": run_filescan,
 }

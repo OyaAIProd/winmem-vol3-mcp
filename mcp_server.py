@@ -1266,6 +1266,40 @@ def windows_filescan() -> dict:
 
 
 @mcp.tool()
+def windows_dumpfiles() -> dict:
+    """
+    Run the dumpfiles plugin to extract cached file contents from memory,
+    returning metadata about recoverable files.
+
+    Use this tool when the user asks about:
+    - Extracting or recovering files from the memory image
+    - Cached file contents still resident in memory
+    - Dumping specific files by address or for a given process
+    - Recovering deleted or in-use files from memory
+    - File content extraction for forensic evidence
+
+    Returns a dict with:
+    - "plugin": "dumpfiles"
+    - "results": list of dicts, each containing:
+        "Cache": cache type such as SharedCacheMap or DataSectionObject (str),
+        "FileObject": address of the FILE_OBJECT (str, hex),
+        "FileName": path of the cached file (str),
+        "Result": dump status or output file path (str)
+
+    Forensic context:
+    - File dumps are currently metadata-only; actual file extraction to disk
+      requires a configured output directory (planned future enhancement)
+    - SharedCacheMap entries represent files actively cached by the OS,
+      while DataSectionObject entries are memory-mapped file sections
+    - Use windows_filescan to first identify files of interest, then this
+      tool to attempt recovery of their contents
+    - Cross-reference with windows_handles to identify which process had
+      the file open at the time of capture
+    """
+    return session.run_plugin("dumpfiles")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
