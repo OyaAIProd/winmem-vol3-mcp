@@ -941,6 +941,42 @@ def windows_callbacks() -> dict:
 
 
 @mcp.tool()
+def windows_devicetree() -> dict:
+    """
+    Run the devicetree plugin to list the device tree showing relationships
+    between drivers and their attached device objects.
+
+    Use this tool when the user asks about:
+    - Device objects and their associated drivers
+    - Driver-device attachment chains or device stacks
+    - Which drivers handle specific device types
+    - Filter drivers or device layering in the I/O stack
+    - Rootkit detection via rogue device attachments
+
+    Returns a dict with:
+    - "plugin": "devicetree"
+    - "results": list of dicts, each containing:
+        "Offset": device or driver object offset (str, hex),
+        "Type": object type, either Driver or Device (str),
+        "DriverName": name of the owning driver (str),
+        "DeviceName": name of the device object (str),
+        "DriverNameOfAttDevice": driver of the attached device (str),
+        "DeviceType": device type classification (str)
+
+    Forensic context:
+    - Unexpected devices attached to legitimate driver stacks may indicate
+      filter driver rootkits intercepting I/O operations
+    - Compare driver names against windows_modules and windows_driverscan
+      to verify all device-owning drivers are legitimate
+    - Filesystem filter drivers (attached to \\FileSystem\\) are commonly
+      used by rootkits to hide files from directory listings
+    - Use windows_driverirp to examine the IRP handlers of suspicious
+      drivers found in the device tree
+    """
+    return session.run_plugin("devicetree")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets
