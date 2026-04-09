@@ -906,6 +906,46 @@ def windows_iat() -> dict:
 
 
 @mcp.tool()
+def windows_netscan() -> dict:
+    """
+    Run the netscan plugin to find network connections and listening sockets
+    by scanning physical memory for network-related pool tags.
+
+    Use this tool when the user asks about:
+    - Network connections or open sockets on the system
+    - What IP addresses or ports a process was communicating with
+    - Listening services or active TCP/UDP connections
+    - Command and control (C2) communication indicators
+    - Network activity at the time of memory capture
+
+    Returns a dict with:
+    - "plugin": "netscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the network object (str, hex),
+        "Proto": protocol such as TCPv4, TCPv6, UDPv4, UDPv6 (str),
+        "LocalAddr": local IP address (str),
+        "LocalPort": local port number (int),
+        "ForeignAddr": remote IP address (str),
+        "ForeignPort": remote port number (int),
+        "State": connection state such as ESTABLISHED, LISTENING, CLOSED (str),
+        "PID": owning process ID (int),
+        "Owner": owning process name (str),
+        "Created": timestamp when the connection was created (str)
+
+    Forensic context:
+    - ESTABLISHED connections to external IPs from unexpected processes are
+      strong C2 indicators; check the ForeignAddr against threat intelligence
+    - LISTENING sockets on unusual ports may indicate backdoors or reverse
+      shells waiting for attacker connections
+    - Use windows_pslist to get full details on the owning PID, and
+      windows_cmdline to see how the networking process was launched
+    - Cross-reference with windows_strings to find URLs or domains that
+      correlate with the observed network endpoints
+    """
+    return session.run_plugin("netscan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

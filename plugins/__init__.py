@@ -8,6 +8,7 @@ from plugins._common import BASE_CONFIG_PATH
 from plugins.kernel import PLUGIN_MAP as _kernel
 from plugins.memory import PLUGIN_MAP as _memory
 from plugins.module import PLUGIN_MAP as _module
+from plugins.network import PLUGIN_MAP as _network
 from plugins.process import PLUGIN_MAP as _process
 from plugins.sysinfo import PLUGIN_MAP as _sysinfo
 
@@ -15,6 +16,7 @@ PLUGIN_MAP: dict[str, callable] = {
     **_kernel,
     **_memory,
     **_module,
+    **_network,
     **_process,
     **_sysinfo,
 }
