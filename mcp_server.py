@@ -1367,6 +1367,184 @@ def windows_symlinkscan() -> dict:
 
 
 @mcp.tool()
+def windows_registry_hivelist() -> dict:
+    """
+    Run the registry.hivelist plugin to list all registry hives loaded
+    in memory, showing their virtual offsets and file paths.
+
+    Use this tool when the user asks about:
+    - Which registry hives are loaded in memory
+    - Registry hive file paths or locations
+    - SAM, SYSTEM, SOFTWARE, NTUSER.DAT, or other hive files
+    - An overview of the registry structure in the memory image
+    - Starting point for registry analysis
+
+    Returns a dict with:
+    - "plugin": "registry.hivelist"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the hive in memory (str, hex),
+        "FileFullPath": full file path of the registry hive (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Use the Offset values from this tool as input to
+      windows_registry_printkey for targeted registry key enumeration
+    - Key hives: SAM (user accounts), SECURITY (policies), SYSTEM
+      (services, drivers), SOFTWARE (installed programs), NTUSER.DAT
+      (per-user settings)
+    - Hives without a file path (e.g., volatile hives) exist only in
+      memory and may contain runtime configuration
+    - Use windows_registry_hivescan to find additional hives that may
+      have been unlinked from the hive list
+    """
+    return session.run_plugin("registry.hivelist")
+
+
+@mcp.tool()
+def windows_registry_hivescan() -> dict:
+    """
+    Run the registry.hivescan plugin to scan for registry hive structures
+    in physical memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Scanning for all registry hives including unlinked ones
+    - Finding registry hives that may have been hidden or detached
+    - A more thorough hive discovery than the standard hive list
+    - Physical offsets of registry hive structures in memory
+    - Verifying hivelist results against pool scan findings
+
+    Returns a dict with:
+    - "plugin": "registry.hivescan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the hive structure (str, hex)
+
+    Forensic context:
+    - Compare with windows_registry_hivelist: hives found here but missing
+      from the list may have been unlinked by a rootkit
+    - The Offset values can be used with windows_registry_printkey to
+      examine keys within specific hives
+    - Pool scanning finds hive remnants even after they are unloaded,
+      potentially revealing previously loaded hives
+    - Use windows_registry_hivelist first for named hives; use this tool
+      when you need to verify completeness or find hidden hives
+    """
+    return session.run_plugin("registry.hivescan")
+
+
+@mcp.tool()
+def windows_registry_printkey() -> dict:
+    """
+    Run the registry.printkey plugin to print registry keys, subkeys,
+    and values from loaded registry hives.
+
+    Use this tool when the user asks about:
+    - Registry key values or data for a specific path
+    - Contents of Run/RunOnce keys (persistence mechanisms)
+    - Installed software, services, or startup entries in the registry
+    - Specific registry paths like HKLM\\SYSTEM\\CurrentControlSet\\Services
+    - Registry-based forensic artifacts (MRU lists, typed URLs, etc.)
+
+    Returns a dict with:
+    - "plugin": "registry.printkey"
+    - "results": list of dicts, each containing:
+        "Last Write Time": last modification timestamp of the key (str),
+        "Hive Offset": offset of the containing hive (str, hex),
+        "Type": entry type, either Key or Value (str),
+        "Key": registry key path (str),
+        "Name": value name or subkey name (str),
+        "Data": value data content (str),
+        "Volatile": whether the key is volatile/memory-only (bool)
+
+    Forensic context:
+    - Persistence keys: HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run,
+      HKLM\\SYSTEM\\CurrentControlSet\\Services — check for malware entries
+    - Last Write Time indicates when the key was last modified, useful
+      for timeline analysis and correlating with process activity
+    - Volatile keys (Volatile=true) exist only in memory and are lost on
+      reboot; malware may use these to avoid on-disk evidence
+    - Use windows_registry_hivelist first to identify hive offsets, then
+      this tool to explore specific keys within those hives
+    """
+    return session.run_plugin("registry.printkey")
+
+
+@mcp.tool()
+def windows_registry_userassist() -> dict:
+    """
+    Run the registry.userassist plugin to decode UserAssist registry entries,
+    which track program execution history for each user.
+
+    Use this tool when the user asks about:
+    - Programs executed by users or application launch history
+    - UserAssist records or program usage statistics
+    - How many times a program was run and when it was last used
+    - User activity or application execution timeline
+    - Evidence of specific program execution on the system
+
+    Returns a dict with:
+    - "plugin": "registry.userassist"
+    - "results": list of dicts, each containing:
+        "Hive Offset": offset of the containing hive (str, hex),
+        "Hive Name": name of the registry hive (str),
+        "Path": registry key path (str),
+        "Last Write Time": key last modification time (str),
+        "Type": entry type (str),
+        "Name": ROT13-decoded program name or path (str),
+        "ID": entry identifier (int),
+        "Count": number of times the program was executed (int),
+        "Focus Count": number of times the window received focus (int),
+        "Time Focused": total time the application had focus (str),
+        "Last Updated": timestamp of the last execution (str),
+        "Raw Data": raw binary data of the entry (str)
+
+    Forensic context:
+    - UserAssist entries are ROT13 encoded in the registry; this plugin
+      automatically decodes them to reveal actual program paths
+    - The Count field shows how many times a user launched each program,
+      useful for establishing patterns of behavior
+    - Last Updated timestamps help build an execution timeline, correlating
+      with process creation times from windows_pslist
+    - Use windows_sessions to identify which user account corresponds to
+      each NTUSER.DAT hive containing UserAssist data
+    """
+    return session.run_plugin("registry.userassist")
+
+
+@mcp.tool()
+def windows_registry_certificates() -> dict:
+    """
+    Run the registry.certificates plugin to list certificates stored in
+    the Windows registry certificate store.
+
+    Use this tool when the user asks about:
+    - Certificates installed on the system
+    - Trusted root certificates or certificate authorities
+    - Rogue or malicious certificates added to the store
+    - SSL/TLS certificate inventory from the registry
+    - Certificate-based trust manipulation indicators
+
+    Returns a dict with:
+    - "plugin": "registry.certificates"
+    - "results": list of dicts, each containing:
+        "Certificate path": registry path of the certificate (str),
+        "Certificate section": store section such as Root, CA, My (str),
+        "Certificate ID": unique identifier for the certificate (str),
+        "Certificate name": common name or subject of the certificate (str)
+
+    Forensic context:
+    - Rogue root certificates in the Trusted Root CA store allow attackers
+      to perform man-in-the-middle attacks on HTTPS traffic
+    - Malware sometimes installs its own CA certificate to intercept
+      encrypted communications or sign malicious code
+    - Compare certificates against known legitimate Windows root CAs to
+      identify unauthorized additions
+    - Use windows_registry_printkey to examine the full certificate data
+      stored under each certificate's registry path
+    """
+    return session.run_plugin("registry.certificates")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
