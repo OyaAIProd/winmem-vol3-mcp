@@ -723,6 +723,43 @@ def windows_dlllist() -> dict:
 
 
 @mcp.tool()
+def windows_ldrmodules() -> dict:
+    """
+    Run the ldrmodules plugin to cross-reference modules across the three
+    PEB loader lists (InLoad, InInit, InMem) to detect unlinked DLLs.
+
+    Use this tool when the user asks about:
+    - Hidden or unlinked DLLs in a process
+    - DLL loader list discrepancies or inconsistencies
+    - Stealthy DLL injection that removes entries from loader lists
+    - Whether all loaded modules appear in all three PEB lists
+    - Rootkit or malware hiding techniques at the module level
+
+    Returns a dict with:
+    - "plugin": "ldrmodules"
+    - "results": list of dicts, each containing:
+        "Pid": process ID (int),
+        "Process": process name (str),
+        "Base": base address of the module (str, hex),
+        "InLoad": present in InLoadOrderModuleList (bool),
+        "InInit": present in InInitializationOrderModuleList (bool),
+        "InMem": present in InMemoryOrderModuleList (bool),
+        "MappedPath": file path from the VAD (str)
+
+    Forensic context:
+    - A module with False in any of InLoad/InInit/InMem has been unlinked
+      from that loader list, which is a classic DLL hiding technique
+    - Legitimate modules should appear in all three lists; any discrepancy
+      warrants investigation
+    - Compare with windows_dlllist which only reads InLoadOrderModuleList;
+      this tool provides a more complete view
+    - Use windows_malfind to check if the unlinked module's memory region
+      contains injected or modified code
+    """
+    return session.run_plugin("ldrmodules")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
