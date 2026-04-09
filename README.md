@@ -1,4 +1,4 @@
-# volatility3-mcp
+# winmem-vol3-mcp
 
 An MCP (Model Context Protocol) server that wraps the [Volatility3](https://github.com/volatilityfoundation/volatility3) memory forensics framework, enabling conversational Windows memory analysis through Claude Desktop.
 
