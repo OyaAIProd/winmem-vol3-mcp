@@ -61,13 +61,13 @@ Registry sub-plugins use `windows_registry_{name}`.
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
 | `windows.bigpools` | `windows_bigpools` | Done | List big page pool allocations |
-| `windows.callbacks` | `windows_callbacks` | Planned | List kernel callbacks and notification routines |
-| `windows.driverscan` | `windows_driverscan` | Planned | Scan for driver objects |
-| `windows.driverirp` | `windows_driverirp` | Planned | List IRPs for drivers |
-| `windows.drivermodule` | `windows_drivermodule` | Planned | Detect hidden driver modules |
-| `windows.devicetree` | `windows_devicetree` | Planned | List device tree by drivers |
-| `windows.ssdt` | `windows_ssdt` | Planned | List system call table |
-| `windows.poolscanner` | `windows_poolscanner` | Planned | Generic pool scanner |
+| `windows.callbacks` | `windows_callbacks` | Done | List kernel callbacks and notification routines |
+| `windows.driverscan` | `windows_driverscan` | Done | Scan for driver objects |
+| `windows.driverirp` | `windows_driverirp` | Done | List IRPs for drivers |
+| `windows.drivermodule` | `windows_drivermodule` | Done | Detect hidden driver modules |
+| `windows.devicetree` | `windows_devicetree` | Done | List device tree by drivers |
+| `windows.ssdt` | `windows_ssdt` | Done | List system call table |
+| `windows.poolscanner` | `windows_poolscanner` | Done | Generic pool scanner |
 
 ## File Analysis
 
@@ -110,5 +110,5 @@ Registry sub-plugins use `windows_registry_{name}`.
 ## Summary
 
 - **Total plugins**: 49
-- **Done**: 5 (windows.info, windows.pslist, windows.psscan, windows.pstree, windows.bigpools)
-- **Planned**: 44
+- **Done**: 34 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, System Info 1)
+- **Planned**: 15
