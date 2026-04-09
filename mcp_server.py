@@ -1333,6 +1333,40 @@ def windows_mutantscan() -> dict:
 
 
 @mcp.tool()
+def windows_symlinkscan() -> dict:
+    """
+    Run the symlinkscan plugin to scan for symbolic link objects in physical
+    memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Symbolic links or object manager symlinks in the kernel
+    - Device name mappings or drive letter assignments
+    - How logical names (e.g., C:) map to physical device paths
+    - Object namespace redirection or aliasing
+    - Potential symlink-based attacks or manipulations
+
+    Returns a dict with:
+    - "plugin": "symlinkscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the symlink object (str, hex),
+        "CreateTime": timestamp when the symlink was created (str),
+        "From Name": source name of the symbolic link (str),
+        "To Name": target path the symlink points to (str)
+
+    Forensic context:
+    - Drive letter mappings (e.g., \\GLOBAL??\\C: -> \\Device\\Harddisk0\\Partition1)
+      reveal the disk and partition layout at the time of capture
+    - Unusual symlinks redirecting system paths may indicate rootkit
+      namespace manipulation to hide files or devices
+    - Compare with windows_devicetree to correlate device names referenced
+      in symlink targets with actual device objects
+    - Use windows_filescan to cross-reference file paths that traverse
+      symlinked directories
+    """
+    return session.run_plugin("symlinkscan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
