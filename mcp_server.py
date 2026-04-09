@@ -946,6 +946,46 @@ def windows_netscan() -> dict:
 
 
 @mcp.tool()
+def windows_netstat() -> dict:
+    """
+    Run the netstat plugin to list network connections by traversing kernel
+    networking data structures (partition table walk).
+
+    Use this tool when the user asks about:
+    - Active network connections via OS kernel structures
+    - A kernel-level view of network activity (complementary to netscan)
+    - TCP/UDP connection state from the OS perspective
+    - Verifying netscan results against kernel-maintained data
+    - Network connections that may not appear in pool tag scans
+
+    Returns a dict with:
+    - "plugin": "netstat"
+    - "results": list of dicts, each containing:
+        "Offset": offset of the network object (str, hex),
+        "Proto": protocol such as TCPv4, TCPv6, UDPv4, UDPv6 (str),
+        "LocalAddr": local IP address (str),
+        "LocalPort": local port number (int),
+        "ForeignAddr": remote IP address (str),
+        "ForeignPort": remote port number (int),
+        "State": connection state such as ESTABLISHED, LISTENING, CLOSED (str),
+        "PID": owning process ID (int),
+        "Owner": owning process name (str),
+        "Created": timestamp when the connection was created (str)
+
+    Forensic context:
+    - This plugin walks kernel structures rather than pool tags, so it may
+      find connections that windows_netscan misses and vice versa
+    - Compare results with windows_netscan: discrepancies may indicate
+      network-level rootkit manipulation of kernel structures
+    - Use windows_pslist to resolve PID to full process details for any
+      suspicious connections
+    - Cross-reference foreign addresses with windows_cmdline to identify
+      which command initiated the network activity
+    """
+    return session.run_plugin("netstat")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
