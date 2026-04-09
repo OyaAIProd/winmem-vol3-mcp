@@ -1511,6 +1511,40 @@ def windows_registry_userassist() -> dict:
 
 
 @mcp.tool()
+def windows_registry_certificates() -> dict:
+    """
+    Run the registry.certificates plugin to list certificates stored in
+    the Windows registry certificate store.
+
+    Use this tool when the user asks about:
+    - Certificates installed on the system
+    - Trusted root certificates or certificate authorities
+    - Rogue or malicious certificates added to the store
+    - SSL/TLS certificate inventory from the registry
+    - Certificate-based trust manipulation indicators
+
+    Returns a dict with:
+    - "plugin": "registry.certificates"
+    - "results": list of dicts, each containing:
+        "Certificate path": registry path of the certificate (str),
+        "Certificate section": store section such as Root, CA, My (str),
+        "Certificate ID": unique identifier for the certificate (str),
+        "Certificate name": common name or subject of the certificate (str)
+
+    Forensic context:
+    - Rogue root certificates in the Trusted Root CA store allow attackers
+      to perform man-in-the-middle attacks on HTTPS traffic
+    - Malware sometimes installs its own CA certificate to intercept
+      encrypted communications or sign malicious code
+    - Compare certificates against known legitimate Windows root CAs to
+      identify unauthorized additions
+    - Use windows_registry_printkey to examine the full certificate data
+      stored under each certificate's registry path
+    """
+    return session.run_plugin("registry.certificates")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

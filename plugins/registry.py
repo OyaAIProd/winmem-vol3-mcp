@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows.registry import hivelist, hivescan, printkey, userassist
+from volatility3.plugins.windows.registry import certificates, hivelist, hivescan, printkey, userassist
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -36,7 +36,14 @@ def run_printkey(session: Session) -> dict:
     return {"plugin": "registry.printkey", "results": parse_treegrid(treegrid)}
 
 
+def run_certificates(session: Session) -> dict:
+    """Run windows.registry.certificates and return certificate store entries."""
+    treegrid = run_plugin(session, certificates.Certificates)
+    return {"plugin": "registry.certificates", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
+    "registry.certificates": run_certificates,
     "registry.hivelist": run_hivelist,
     "registry.hivescan": run_hivescan,
     "registry.printkey": run_printkey,
