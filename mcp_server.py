@@ -461,6 +461,48 @@ def windows_thrdscan() -> dict:
 
 
 @mcp.tool()
+def windows_malfind() -> dict:
+    """
+    Run the malfind plugin to detect process memory regions that potentially
+    contain injected code, based on VAD permissions and content heuristics.
+
+    Use this tool when the user asks about:
+    - Code injection or process injection detection
+    - Suspicious executable memory regions in a process
+    - Injected DLLs, shellcode, or reflective loading
+    - Memory-resident malware or fileless malware indicators
+    - Processes with anomalous memory protection flags (RWX)
+
+    Returns a dict with:
+    - "plugin": "malfind"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Start VPN": start virtual page number (str, hex),
+        "End VPN": end virtual page number (str, hex),
+        "Tag": VAD pool tag (str),
+        "Protection": memory protection flags such as PAGE_EXECUTE_READWRITE (str),
+        "CommitCharge": number of committed pages (int),
+        "PrivateMemory": whether memory is private (int),
+        "File output": file dump status (str),
+        "Notes": detection notes (str),
+        "Hexdump": hex dump of the region header (str),
+        "Disasm": disassembly of the region header (str)
+
+    Forensic context:
+    - PAGE_EXECUTE_READWRITE regions not backed by a file are the primary
+      indicator of injected code (shellcode, reflective DLL loading)
+    - The Hexdump and Disasm fields allow quick triage: look for MZ headers
+      (injected PE) or common shellcode patterns (e.g., NOP sleds, API hashing)
+    - Use windows_pslist to identify the affected process, then windows_dlllist
+      to check if the region overlaps with any legitimate loaded module
+    - Cross-reference with windows_handles to find related file or section
+      objects that may reveal the injection source
+    """
+    return session.run_plugin("malfind")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
