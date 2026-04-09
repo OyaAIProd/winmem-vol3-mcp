@@ -12,7 +12,7 @@ from volatility3.framework import automagic, interfaces
 from volatility3.framework.interfaces.renderers import BaseAbsentValue
 from volatility3.framework.renderers import format_hints
 from volatility3.framework.interfaces.configuration import path_join
-from volatility3.plugins.windows import info, pslist, psscan, pstree
+from volatility3.plugins.windows import bigpools, info, pslist, psscan, pstree
 
 if TYPE_CHECKING:
     from session import Session
@@ -111,7 +111,14 @@ def run_pstree(session: Session) -> dict:
     return {"plugin": "pstree", "results": rows}
 
 
+def run_bigpools(session: Session) -> dict:
+    """Run windows.bigpools and return big page pool allocations."""
+    treegrid = _run_plugin(session, bigpools.BigPools)
+    return {"plugin": "bigpools", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_REGISTRY: dict[str, callable] = {
+    "bigpools": run_bigpools,
     "info": run_info,
     "pslist": run_pslist,
     "psscan": run_psscan,

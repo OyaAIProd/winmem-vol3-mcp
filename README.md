@@ -54,7 +54,7 @@ After configuring Claude Desktop, try asking:
 
 > *"Please, identify the memory image."*
 
-Claude will automatically call `get_image_info` and present the analysis results in a conversational format:
+Claude will automatically call `windows_info` and present the analysis results in a conversational format:
 
 ![Memory Image Identification](png/imageinfo.png)
 
@@ -66,12 +66,19 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-| MCP Tool | Volatility3 Plugin | Description |
+49 Volatility3 Windows plugins mapped as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the full list with detailed status.
+
+| Category | Plugins | Implemented |
 |---|---|---|
-| `get_image_info` | `windows.info` | OS version, architecture, kernel base (call first to cache config) |
-| `get_processes` | `windows.pslist` | List running processes |
-| `scan_processes` | `windows.psscan` | Pool tag scanning (finds hidden/unlinked processes) |
-| `get_process_tree` | `windows.pstree` | Process tree with parent-child hierarchy |
+| Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan | 3 / 11 |
+| Memory Analysis | malfind, vadinfo, vadwalk, memmap, virtmap, strings | 0 / 6 |
+| Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat | 0 / 6 |
+| Network Analysis | netscan, netstat | 0 / 2 |
+| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner | 1 / 8 |
+| File Analysis | filescan, dumpfiles, symlinkscan, mutantscan | 0 / 4 |
+| Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates | 0 / 5 |
+| System Information | info, statistics, crashinfo | 1 / 3 |
+| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids | 0 / 4 |
 
 ## Architecture
 
