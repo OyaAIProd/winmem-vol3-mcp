@@ -312,6 +312,48 @@ def windows_handles() -> dict:
 
 
 @mcp.tool()
+def windows_joblinks() -> dict:
+    """
+    Run the joblinks plugin to display process job object associations,
+    showing how processes are grouped into Windows job objects.
+
+    Use this tool when the user asks about:
+    - Process job objects or job grouping
+    - Process resource limits or job-based restrictions
+    - Sandbox or container boundaries for processes
+    - Relationships between processes within the same job
+    - Active, terminated, or total process counts within a job
+
+    Returns a dict with:
+    - "plugin": "joblinks"
+    - "results": list of dicts, each containing:
+        "Offset(V)": virtual offset of the job object (str, hex),
+        "Name": job object name (str),
+        "PID": process ID (int),
+        "PPID": parent process ID (int),
+        "Sess": session ID (int),
+        "JobSess": job session ID (int),
+        "Wow64": whether process is 32-bit on 64-bit OS (bool),
+        "Total": total processes assigned to the job (int),
+        "Active": currently active processes in the job (int),
+        "Term": terminated processes in the job (int),
+        "JobLink": job link chain description (str),
+        "Process": process name (str)
+
+    Forensic context:
+    - Sandboxed applications (browsers, Office) use job objects to limit
+      child processes; unexpected processes outside the job may indicate
+      sandbox escape
+    - Malware may create job objects to manage its spawned processes as a
+      group, making job analysis useful for identifying process clusters
+    - Use windows_pstree to visualize parent-child hierarchy and compare
+      with job grouping to find discrepancies
+    - Cross-reference with windows_pslist for full process metadata
+    """
+    return session.run_plugin("joblinks")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
