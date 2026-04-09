@@ -1469,6 +1469,48 @@ def windows_registry_printkey() -> dict:
 
 
 @mcp.tool()
+def windows_registry_userassist() -> dict:
+    """
+    Run the registry.userassist plugin to decode UserAssist registry entries,
+    which track program execution history for each user.
+
+    Use this tool when the user asks about:
+    - Programs executed by users or application launch history
+    - UserAssist records or program usage statistics
+    - How many times a program was run and when it was last used
+    - User activity or application execution timeline
+    - Evidence of specific program execution on the system
+
+    Returns a dict with:
+    - "plugin": "registry.userassist"
+    - "results": list of dicts, each containing:
+        "Hive Offset": offset of the containing hive (str, hex),
+        "Hive Name": name of the registry hive (str),
+        "Path": registry key path (str),
+        "Last Write Time": key last modification time (str),
+        "Type": entry type (str),
+        "Name": ROT13-decoded program name or path (str),
+        "ID": entry identifier (int),
+        "Count": number of times the program was executed (int),
+        "Focus Count": number of times the window received focus (int),
+        "Time Focused": total time the application had focus (str),
+        "Last Updated": timestamp of the last execution (str),
+        "Raw Data": raw binary data of the entry (str)
+
+    Forensic context:
+    - UserAssist entries are ROT13 encoded in the registry; this plugin
+      automatically decodes them to reveal actual program paths
+    - The Count field shows how many times a user launched each program,
+      useful for establishing patterns of behavior
+    - Last Updated timestamps help build an execution timeline, correlating
+      with process creation times from windows_pslist
+    - Use windows_sessions to identify which user account corresponds to
+      each NTUSER.DAT hive containing UserAssist data
+    """
+    return session.run_plugin("registry.userassist")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

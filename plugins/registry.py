@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows.registry import hivelist, hivescan, printkey
+from volatility3.plugins.windows.registry import hivelist, hivescan, printkey, userassist
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -24,6 +24,12 @@ def run_hivescan(session: Session) -> dict:
     return {"plugin": "registry.hivescan", "results": parse_treegrid(treegrid)}
 
 
+def run_userassist(session: Session) -> dict:
+    """Run windows.registry.userassist and return UserAssist data."""
+    treegrid = run_plugin(session, userassist.UserAssist)
+    return {"plugin": "registry.userassist", "results": parse_treegrid(treegrid)}
+
+
 def run_printkey(session: Session) -> dict:
     """Run windows.registry.printkey and return registry keys and values."""
     treegrid = run_plugin(session, printkey.PrintKey)
@@ -34,4 +40,5 @@ PLUGIN_MAP = {
     "registry.hivelist": run_hivelist,
     "registry.hivescan": run_hivescan,
     "registry.printkey": run_printkey,
+    "registry.userassist": run_userassist,
 }
