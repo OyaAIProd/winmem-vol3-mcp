@@ -977,6 +977,42 @@ def windows_devicetree() -> dict:
 
 
 @mcp.tool()
+def windows_driverirp() -> dict:
+    """
+    Run the driverirp plugin to list IRP (I/O Request Packet) major function
+    handlers for each driver, showing which code handles each I/O operation.
+
+    Use this tool when the user asks about:
+    - IRP handlers or I/O dispatch routines for drivers
+    - Which function handles read, write, or device control for a driver
+    - IRP hooking or driver dispatch table manipulation
+    - Rootkit detection via tampered IRP handlers
+    - Driver behavior analysis through its dispatch table
+
+    Returns a dict with:
+    - "plugin": "driverirp"
+    - "results": list of dicts, each containing:
+        "Offset": driver object offset (str, hex),
+        "Driver Name": name of the driver (str),
+        "IRP": IRP major function name such as IRP_MJ_CREATE (str),
+        "Address": address of the handler function (str, hex),
+        "Module": module containing the handler (str),
+        "Symbol": resolved symbol name if available (str)
+
+    Forensic context:
+    - IRP handlers pointing outside the owning driver's module range indicate
+      IRP hooking, a common rootkit technique to intercept I/O operations
+    - Compare the Module field with the Driver Name: mismatches suggest a
+      different module has hooked the driver's dispatch table
+    - Use windows_modules to verify the expected address range for each
+      driver module and detect out-of-range handler addresses
+    - Cross-reference with windows_devicetree to understand the full I/O
+      stack and identify which drivers are layered together
+    """
+    return session.run_plugin("driverirp")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets
