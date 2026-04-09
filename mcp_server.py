@@ -1401,6 +1401,37 @@ def windows_registry_hivelist() -> dict:
 
 
 @mcp.tool()
+def windows_registry_hivescan() -> dict:
+    """
+    Run the registry.hivescan plugin to scan for registry hive structures
+    in physical memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Scanning for all registry hives including unlinked ones
+    - Finding registry hives that may have been hidden or detached
+    - A more thorough hive discovery than the standard hive list
+    - Physical offsets of registry hive structures in memory
+    - Verifying hivelist results against pool scan findings
+
+    Returns a dict with:
+    - "plugin": "registry.hivescan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the hive structure (str, hex)
+
+    Forensic context:
+    - Compare with windows_registry_hivelist: hives found here but missing
+      from the list may have been unlinked by a rootkit
+    - The Offset values can be used with windows_registry_printkey to
+      examine keys within specific hives
+    - Pool scanning finds hive remnants even after they are unloaded,
+      potentially revealing previously loaded hives
+    - Use windows_registry_hivelist first for named hives; use this tool
+      when you need to verify completeness or find hidden hives
+    """
+    return session.run_plugin("registry.hivescan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

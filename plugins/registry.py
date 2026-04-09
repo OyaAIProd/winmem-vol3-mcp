@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows.registry import hivelist
+from volatility3.plugins.windows.registry import hivelist, hivescan
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -18,6 +18,13 @@ def run_hivelist(session: Session) -> dict:
     return {"plugin": "registry.hivelist", "results": parse_treegrid(treegrid)}
 
 
+def run_hivescan(session: Session) -> dict:
+    """Run windows.registry.hivescan and return hives found by pool scanning."""
+    treegrid = run_plugin(session, hivescan.HiveScan)
+    return {"plugin": "registry.hivescan", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "registry.hivelist": run_hivelist,
+    "registry.hivescan": run_hivescan,
 }
