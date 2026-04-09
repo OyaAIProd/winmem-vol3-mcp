@@ -1300,6 +1300,39 @@ def windows_dumpfiles() -> dict:
 
 
 @mcp.tool()
+def windows_mutantscan() -> dict:
+    """
+    Run the mutantscan plugin to scan for mutex (mutant) objects in physical
+    memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Mutexes or named mutants on the system
+    - Malware mutex indicators or unique mutex names
+    - Synchronization objects used by processes
+    - Whether a known malware mutex exists in memory
+    - Named kernel objects used for inter-process signaling
+
+    Returns a dict with:
+    - "plugin": "mutantscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the mutant object (str, hex),
+        "Name": name of the mutex (str)
+
+    Forensic context:
+    - Many malware families create uniquely named mutexes to prevent
+      multiple instances; searching for known mutex names is a fast
+      IOC check (e.g., "Global\\MicrosoftUpdateService" used by some RATs)
+    - Use windows_handles (Type=Mutant) to determine which process owns
+      each mutex, linking the mutex back to a specific process
+    - Unnamed mutexes (empty Name field) are common and usually benign;
+      focus investigation on named mutexes with suspicious patterns
+    - Cross-reference mutex names with threat intelligence databases
+      for known malware family indicators
+    """
+    return session.run_plugin("mutantscan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
