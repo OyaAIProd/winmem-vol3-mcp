@@ -1367,6 +1367,40 @@ def windows_symlinkscan() -> dict:
 
 
 @mcp.tool()
+def windows_registry_hivelist() -> dict:
+    """
+    Run the registry.hivelist plugin to list all registry hives loaded
+    in memory, showing their virtual offsets and file paths.
+
+    Use this tool when the user asks about:
+    - Which registry hives are loaded in memory
+    - Registry hive file paths or locations
+    - SAM, SYSTEM, SOFTWARE, NTUSER.DAT, or other hive files
+    - An overview of the registry structure in the memory image
+    - Starting point for registry analysis
+
+    Returns a dict with:
+    - "plugin": "registry.hivelist"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the hive in memory (str, hex),
+        "FileFullPath": full file path of the registry hive (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Use the Offset values from this tool as input to
+      windows_registry_printkey for targeted registry key enumeration
+    - Key hives: SAM (user accounts), SECURITY (policies), SYSTEM
+      (services, drivers), SOFTWARE (installed programs), NTUSER.DAT
+      (per-user settings)
+    - Hives without a file path (e.g., volatile hives) exist only in
+      memory and may contain runtime configuration
+    - Use windows_registry_hivescan to find additional hives that may
+      have been unlinked from the hive list
+    """
+    return session.run_plugin("registry.hivelist")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
