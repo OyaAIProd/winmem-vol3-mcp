@@ -652,6 +652,39 @@ def windows_virtmap() -> dict:
 
 
 @mcp.tool()
+def windows_strings() -> dict:
+    """
+    Run the strings plugin to map output from the external strings command
+    to the process that owns each string's physical memory location.
+
+    Use this tool when the user asks about:
+    - Which process owns a specific string found in memory
+    - Mapping strings output to processes
+    - Searching for URLs, IP addresses, or keywords in process memory
+    - Attributing strings from a raw memory dump to specific processes
+    - Correlating extracted strings with process activity
+
+    Returns a dict with:
+    - "plugin": "strings"
+    - "results": list of dicts, each containing:
+        "String": the extracted string content (str),
+        "Physical Address": physical address where the string was found (str, hex),
+        "Result": process(es) that map this physical address (str)
+
+    Forensic context:
+    - Requires a pre-generated strings file (from the external `strings`
+      utility) passed via plugin configuration; without it, results will
+      be empty
+    - Strings attributed to unexpected processes (e.g., C2 URLs in a
+      system process) are strong indicators of compromise
+    - Use windows_pslist to resolve process names from the Result field
+    - Cross-reference suspicious strings with windows_netscan to confirm
+      network-related IOCs (IP addresses, domains, URLs)
+    """
+    return session.run_plugin("strings")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
