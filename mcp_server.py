@@ -584,6 +584,41 @@ def windows_vadwalk() -> dict:
 
 
 @mcp.tool()
+def windows_memmap() -> dict:
+    """
+    Run the memmap plugin to display the virtual-to-physical memory mapping
+    for a process, showing how virtual addresses translate to physical offsets.
+
+    Use this tool when the user asks about:
+    - Virtual to physical address translation for a process
+    - Memory map or physical memory layout of a process
+    - Which physical pages back a process's virtual address space
+    - Dumping process memory based on physical offsets
+    - Memory page sizes and their file offsets in the image
+
+    Returns a dict with:
+    - "plugin": "memmap"
+    - "results": list of dicts, each containing:
+        "Virtual": virtual address (str, hex),
+        "Physical": physical address in the memory image (str, hex),
+        "Size": size of the mapping in bytes (str, hex),
+        "Offset in File": offset within the memory image file (str, hex),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Physical addresses can be used to locate data directly in the raw
+      memory image file for manual hex analysis or carving
+    - Large contiguous mappings may indicate memory-mapped files or large
+      allocations worth investigating
+    - Use windows_vadinfo for higher-level memory region metadata (protection,
+      mapped files) rather than raw page-level mappings
+    - This tool produces large result sets; use it for targeted investigation
+      of specific processes identified through windows_pslist
+    """
+    return session.run_plugin("memmap")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
