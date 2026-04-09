@@ -18,6 +18,6 @@ def run_bigpools(session: Session) -> dict:
     return {"plugin": "bigpools", "results": parse_treegrid(treegrid)}
 
 
-REGISTRY = {
+PLUGIN_MAP = {
     "bigpools": run_bigpools,
 }

@@ -461,6 +461,230 @@ def windows_thrdscan() -> dict:
 
 
 @mcp.tool()
+def windows_malfind() -> dict:
+    """
+    Run the malfind plugin to detect process memory regions that potentially
+    contain injected code, based on VAD permissions and content heuristics.
+
+    Use this tool when the user asks about:
+    - Code injection or process injection detection
+    - Suspicious executable memory regions in a process
+    - Injected DLLs, shellcode, or reflective loading
+    - Memory-resident malware or fileless malware indicators
+    - Processes with anomalous memory protection flags (RWX)
+
+    Returns a dict with:
+    - "plugin": "malfind"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Start VPN": start virtual page number (str, hex),
+        "End VPN": end virtual page number (str, hex),
+        "Tag": VAD pool tag (str),
+        "Protection": memory protection flags such as PAGE_EXECUTE_READWRITE (str),
+        "CommitCharge": number of committed pages (int),
+        "PrivateMemory": whether memory is private (int),
+        "File output": file dump status (str),
+        "Notes": detection notes (str),
+        "Hexdump": hex dump of the region header (str),
+        "Disasm": disassembly of the region header (str)
+
+    Forensic context:
+    - PAGE_EXECUTE_READWRITE regions not backed by a file are the primary
+      indicator of injected code (shellcode, reflective DLL loading)
+    - The Hexdump and Disasm fields allow quick triage: look for MZ headers
+      (injected PE) or common shellcode patterns (e.g., NOP sleds, API hashing)
+    - Use windows_pslist to identify the affected process, then windows_dlllist
+      to check if the region overlaps with any legitimate loaded module
+    - Cross-reference with windows_handles to find related file or section
+      objects that may reveal the injection source
+    """
+    return session.run_plugin("malfind")
+
+
+@mcp.tool()
+def windows_vadinfo() -> dict:
+    """
+    Run the vadinfo plugin to list detailed Virtual Address Descriptor (VAD)
+    information for each process, including memory-mapped files.
+
+    Use this tool when the user asks about:
+    - Virtual memory layout or address space of a process
+    - Memory-mapped files or sections loaded by a process
+    - VAD tree entries, memory protection, or commit charge
+    - Which files are mapped into a process's address space
+    - Detailed memory region metadata beyond what malfind shows
+
+    Returns a dict with:
+    - "plugin": "vadinfo"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Offset": VAD node offset (str, hex),
+        "Start VPN": start virtual page number (str, hex),
+        "End VPN": end virtual page number (str, hex),
+        "Tag": VAD pool tag (str),
+        "Protection": memory protection flags (str),
+        "CommitCharge": number of committed pages (int),
+        "PrivateMemory": whether memory is private (int),
+        "Parent": parent VAD node offset (str, hex),
+        "File": path of the memory-mapped file if any (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - The File field reveals DLLs and executables mapped into memory that
+      may not appear in windows_dlllist (e.g., manually mapped images)
+    - Compare VAD protection flags with expected values: legitimate code
+      sections are typically PAGE_EXECUTE_READ, not PAGE_EXECUTE_READWRITE
+    - Use windows_malfind for focused detection of injected regions; use
+      this tool for comprehensive VAD enumeration
+    - Cross-reference with windows_handles (Type=Section) to identify
+      shared memory mappings between processes
+    """
+    return session.run_plugin("vadinfo")
+
+
+@mcp.tool()
+def windows_vadwalk() -> dict:
+    """
+    Run the vadwalk plugin to walk the VAD tree and display the binary tree
+    structure of virtual address descriptors for each process.
+
+    Use this tool when the user asks about:
+    - VAD tree structure or binary tree layout
+    - Parent, left, and right child relationships between VAD nodes
+    - Low-level virtual memory organization of a process
+    - VAD node addresses and their start/end ranges
+    - Debugging memory layout or verifying VAD tree integrity
+
+    Returns a dict with:
+    - "plugin": "vadwalk"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Offset": VAD node offset (str, hex),
+        "Parent": parent VAD node offset (str, hex),
+        "Left": left child VAD node offset (str, hex),
+        "Right": right child VAD node offset (str, hex),
+        "Start": start address of the region (str, hex),
+        "End": end address of the region (str, hex),
+        "Tag": VAD pool tag (str)
+
+    Forensic context:
+    - A corrupted VAD tree (broken parent/child links) may indicate kernel
+      exploitation or memory corruption attacks
+    - Use windows_vadinfo for richer metadata (protection, mapped files)
+      per VAD entry; this tool focuses on the tree structure itself
+    - Compare VAD node counts between windows_vadwalk and windows_vadinfo
+      to detect inconsistencies that could signal manipulation
+    - Use windows_malfind for targeted detection of suspicious regions
+      rather than walking the entire tree
+    """
+    return session.run_plugin("vadwalk")
+
+
+@mcp.tool()
+def windows_memmap() -> dict:
+    """
+    Run the memmap plugin to display the virtual-to-physical memory mapping
+    for a process, showing how virtual addresses translate to physical offsets.
+
+    Use this tool when the user asks about:
+    - Virtual to physical address translation for a process
+    - Memory map or physical memory layout of a process
+    - Which physical pages back a process's virtual address space
+    - Dumping process memory based on physical offsets
+    - Memory page sizes and their file offsets in the image
+
+    Returns a dict with:
+    - "plugin": "memmap"
+    - "results": list of dicts, each containing:
+        "Virtual": virtual address (str, hex),
+        "Physical": physical address in the memory image (str, hex),
+        "Size": size of the mapping in bytes (str, hex),
+        "Offset in File": offset within the memory image file (str, hex),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Physical addresses can be used to locate data directly in the raw
+      memory image file for manual hex analysis or carving
+    - Large contiguous mappings may indicate memory-mapped files or large
+      allocations worth investigating
+    - Use windows_vadinfo for higher-level memory region metadata (protection,
+      mapped files) rather than raw page-level mappings
+    - This tool produces large result sets; use it for targeted investigation
+      of specific processes identified through windows_pslist
+    """
+    return session.run_plugin("memmap")
+
+
+@mcp.tool()
+def windows_virtmap() -> dict:
+    """
+    Run the virtmap plugin to list virtual mapped sections of the kernel
+    address space, showing how major kernel regions are laid out.
+
+    Use this tool when the user asks about:
+    - Kernel virtual address space layout
+    - Mapped kernel regions and their address ranges
+    - System address space organization (HAL, kernel, drivers, etc.)
+    - Kernel memory boundaries or region sizes
+    - Overview of how the OS organizes its virtual memory
+
+    Returns a dict with:
+    - "plugin": "virtmap"
+    - "results": list of dicts, each containing:
+        "Region": name or description of the mapped region (str),
+        "Start offset": start virtual address of the region (str, hex),
+        "End offset": end virtual address of the region (str, hex)
+
+    Forensic context:
+    - Kernel regions outside expected address ranges may indicate rootkit
+      modifications or kernel memory patching
+    - Compare region boundaries with known Windows kernel layout to detect
+      anomalous mappings injected by rootkits
+    - Use windows_modules and windows_driverscan to correlate driver load
+      addresses with the virtual map regions
+    - This provides a system-level overview; use windows_vadinfo for
+      per-process virtual memory details
+    """
+    return session.run_plugin("virtmap")
+
+
+@mcp.tool()
+def windows_strings() -> dict:
+    """
+    Run the strings plugin to map output from the external strings command
+    to the process that owns each string's physical memory location.
+
+    Use this tool when the user asks about:
+    - Which process owns a specific string found in memory
+    - Mapping strings output to processes
+    - Searching for URLs, IP addresses, or keywords in process memory
+    - Attributing strings from a raw memory dump to specific processes
+    - Correlating extracted strings with process activity
+
+    Returns a dict with:
+    - "plugin": "strings"
+    - "results": list of dicts, each containing:
+        "String": the extracted string content (str),
+        "Physical Address": physical address where the string was found (str, hex),
+        "Result": process(es) that map this physical address (str)
+
+    Forensic context:
+    - Requires a pre-generated strings file (from the external `strings`
+      utility) passed via plugin configuration; without it, results will
+      be empty
+    - Strings attributed to unexpected processes (e.g., C2 URLs in a
+      system process) are strong indicators of compromise
+    - Use windows_pslist to resolve process names from the Result field
+    - Cross-reference suspicious strings with windows_netscan to confirm
+      network-related IOCs (IP addresses, domains, URLs)
+    """
+    return session.run_plugin("strings")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
