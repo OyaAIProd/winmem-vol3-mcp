@@ -12,7 +12,7 @@ from volatility3.framework import automagic, interfaces
 from volatility3.framework.interfaces.renderers import BaseAbsentValue
 from volatility3.framework.renderers import format_hints
 from volatility3.framework.interfaces.configuration import path_join
-from volatility3.plugins.windows import pslist
+from volatility3.plugins.windows import pslist, psscan
 
 BASE_CONFIG_PATH = "plugins"
 
@@ -65,6 +65,13 @@ def run_pslist(ctx: interfaces.context.ContextInterface) -> dict:
     return {"plugin": "pslist", "results": parse_treegrid(treegrid)}
 
 
+def run_psscan(ctx: interfaces.context.ContextInterface) -> dict:
+    """Run windows.psscan and return process list found by pool scanning."""
+    treegrid = _run_plugin(ctx, psscan.PsScan)
+    return {"plugin": "psscan", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_REGISTRY: dict[str, callable] = {
     "pslist": run_pslist,
+    "psscan": run_psscan,
 }

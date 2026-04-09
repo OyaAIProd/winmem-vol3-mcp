@@ -24,5 +24,11 @@ def get_processes() -> dict:
     return session.run_plugin("pslist")
 
 
+@mcp.tool()
+def scan_processes() -> dict:
+    """Scan for processes using pool tag scanning. Can find hidden/unlinked processes."""
+    return session.run_plugin("psscan")
+
+
 if __name__ == "__main__":
     mcp.run()
