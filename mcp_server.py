@@ -1545,6 +1545,43 @@ def windows_registry_certificates() -> dict:
 
 
 @mcp.tool()
+def windows_statistics() -> dict:
+    """
+    Run the statistics plugin to display memory space statistics, showing
+    how many pages are valid, swapped, or invalid in the memory image.
+
+    Use this tool when the user asks about:
+    - Memory image quality or completeness
+    - How many valid vs invalid pages are in the memory dump
+    - Swapped or paged-out memory statistics
+    - Overall memory utilization at the time of capture
+    - Whether the memory image has sufficient data for analysis
+
+    Returns a dict with:
+    - "plugin": "statistics"
+    - "results": list of dicts, each containing:
+        "Valid pages (all)": total valid pages (int),
+        "Valid pages (large)": valid large pages (int),
+        "Swapped Pages (all)": total swapped pages (int),
+        "Swapped Pages (large)": swapped large pages (int),
+        "Invalid Pages (all)": total invalid pages (int),
+        "Invalid Pages (large)": invalid large pages (int),
+        "Other Invalid Pages (all)": other invalid pages (int)
+
+    Forensic context:
+    - A high ratio of invalid pages may indicate an incomplete or
+      corrupted memory dump, reducing the reliability of other plugins
+    - Swapped pages represent data that was paged to disk at capture time;
+      this data may be missing from analysis unless the pagefile is available
+    - Run this tool early to assess image quality before investing time
+      in detailed analysis with other plugins
+    - Use windows_info to get OS version context for interpreting the
+      memory layout statistics
+    """
+    return session.run_plugin("statistics")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
