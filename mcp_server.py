@@ -685,6 +685,44 @@ def windows_strings() -> dict:
 
 
 @mcp.tool()
+def windows_dlllist() -> dict:
+    """
+    Run the dlllist plugin to list DLLs and loaded modules for each process
+    from the PEB (Process Environment Block) loader data.
+
+    Use this tool when the user asks about:
+    - DLLs or shared libraries loaded by a process
+    - What modules a process has loaded into memory
+    - Suspicious or unexpected DLLs in a process
+    - DLL load order, base addresses, or file paths
+    - DLL hijacking or side-loading indicators
+
+    Returns a dict with:
+    - "plugin": "dlllist"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Base": base address of the loaded module (str, hex),
+        "Size": size of the module in memory (str, hex),
+        "Name": module file name (str),
+        "Path": full path of the loaded module (str),
+        "LoadTime": time the module was loaded (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - DLLs loaded from unusual paths (e.g., temp directories, user profile)
+      are suspicious and may indicate DLL hijacking or malware staging
+    - Compare with windows_ldrmodules to detect discrepancies; modules
+      missing from one loader list but present in another suggest unlinking
+    - Use windows_malfind to check if any loaded module regions have been
+      modified in memory (code patching / hooking)
+    - Cross-reference with windows_cmdline to verify that loaded DLLs match
+      the expected behavior of each process
+    """
+    return session.run_plugin("dlllist")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
