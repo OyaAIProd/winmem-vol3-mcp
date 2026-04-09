@@ -1118,6 +1118,41 @@ def windows_poolscanner() -> dict:
 
 
 @mcp.tool()
+def windows_ssdt() -> dict:
+    """
+    Run the ssdt plugin to list the System Service Descriptor Table (SSDT),
+    mapping system call indices to their handler addresses and modules.
+
+    Use this tool when the user asks about:
+    - System call table or SSDT entries
+    - System call hooking or SSDT patching detection
+    - Which module handles each system call (syscall)
+    - Kernel-level API hooking indicators
+    - System call dispatch table integrity
+
+    Returns a dict with:
+    - "plugin": "ssdt"
+    - "results": list of dicts, each containing:
+        "Index": system call index number (int),
+        "Address": address of the system call handler (str, hex),
+        "Module": module containing the handler (str),
+        "Symbol": resolved symbol name such as NtCreateFile (str)
+
+    Forensic context:
+    - All SSDT entries should point to ntoskrnl.exe or win32k.sys; entries
+      pointing to other modules indicate SSDT hooking by a rootkit
+    - Compare Module values against windows_modules to verify the handler
+      belongs to a legitimate kernel module
+    - SSDT hooking was common in older rootkits (pre-PatchGuard); on 64-bit
+      Windows with PatchGuard, SSDT hooks are rarer but still possible via
+      PatchGuard bypass techniques
+    - Use windows_callbacks for detecting notification-based hooks, which
+      are more common on modern Windows than SSDT hooking
+    """
+    return session.run_plugin("ssdt")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets
