@@ -870,6 +870,42 @@ def windows_verinfo() -> dict:
 
 
 @mcp.tool()
+def windows_iat() -> dict:
+    """
+    Run the iat plugin to extract the Import Address Table (IAT) from loaded
+    modules, listing API functions imported from external libraries.
+
+    Use this tool when the user asks about:
+    - API functions imported by a process or module
+    - Import Address Table entries or imported DLL functions
+    - What Windows API calls a process is set up to use
+    - IAT hooking detection (function addresses pointing outside the library)
+    - Behavioral analysis based on imported functions
+
+    Returns a dict with:
+    - "plugin": "iat"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Name": module name that imports the function (str),
+        "Library": library providing the imported function (str),
+        "Bound": whether the import is bound (bool),
+        "Function": imported function name (str),
+        "Address": resolved function address (str, hex)
+
+    Forensic context:
+    - Suspicious imports like VirtualAllocEx, WriteProcessMemory,
+      CreateRemoteThread indicate process injection capability
+    - IAT hooking: if the Address field points outside the expected Library
+      module range, the import has been redirected (API hooking)
+    - Use windows_dlllist to verify the base address range of each Library,
+      then compare with the resolved Address to detect hooks
+    - Cross-reference imported functions with windows_malfind results to
+      understand what capabilities injected code may leverage
+    """
+    return session.run_plugin("iat")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

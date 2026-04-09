@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import dlllist, ldrmodules, modscan, modules, verinfo
+from volatility3.plugins.windows import dlllist, iat, ldrmodules, modscan, modules, verinfo
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -42,8 +42,15 @@ def run_verinfo(session: Session) -> dict:
     return {"plugin": "verinfo", "results": parse_treegrid(treegrid)}
 
 
+def run_iat(session: Session) -> dict:
+    """Run windows.iat and return Import Address Table entries."""
+    treegrid = run_plugin(session, iat.IAT)
+    return {"plugin": "iat", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "dlllist": run_dlllist,
+    "iat": run_iat,
     "ldrmodules": run_ldrmodules,
     "modscan": run_modscan,
     "modules": run_modules,
