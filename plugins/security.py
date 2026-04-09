@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import skeleton_key_check
+from volatility3.plugins.windows import mbrscan, skeleton_key_check
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -18,6 +18,13 @@ def run_skeleton_key_check(session: Session) -> dict:
     return {"plugin": "skeleton_key_check", "results": parse_treegrid(treegrid)}
 
 
+def run_mbrscan(session: Session) -> dict:
+    """Run windows.mbrscan and return potential Master Boot Record entries."""
+    treegrid = run_plugin(session, mbrscan.MBRScan)
+    return {"plugin": "mbrscan", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
+    "mbrscan": run_mbrscan,
     "skeleton_key_check": run_skeleton_key_check,
 }

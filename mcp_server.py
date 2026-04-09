@@ -1581,6 +1581,45 @@ def windows_skeleton_key_check() -> dict:
 
 
 @mcp.tool()
+def windows_mbrscan() -> dict:
+    """
+    Run the mbrscan plugin to scan for and parse potential Master Boot
+    Records (MBRs) in the memory image.
+
+    Use this tool when the user asks about:
+    - Master Boot Records or MBR analysis
+    - Bootkit or boot-level malware detection
+    - Disk partition layout found in memory
+    - Boot code integrity or MBR tampering
+    - Disk signatures or bootable partition indicators
+
+    Returns a dict with:
+    - "plugin": "mbrscan"
+    - "results": list of dicts, each containing:
+        "Potential MBR at Physical Offset": physical offset (str, hex),
+        "Disk Signature": disk signature identifier (str),
+        "Bootcode MD5": MD5 hash of the boot code section (str),
+        "Full MBR MD5": MD5 hash of the entire MBR (str),
+        "PartitionIndex": partition table entry index (int),
+        "Bootable": whether the partition is marked bootable (bool),
+        "PartitionType": filesystem or partition type (str),
+        "SectorInSize": partition size in sectors (str, hex),
+        "Disasm": disassembly of the boot code (str)
+
+    Forensic context:
+    - Compare Bootcode MD5 against known-good MBR hashes for the OS
+      version; mismatches may indicate bootkit infection
+    - Bootkits like TDL4, Rovnix, or Carberp modify the MBR to load
+      malicious code before the operating system starts
+    - Multiple MBR candidates at different offsets may indicate previous
+      MBR contents preserved in memory after modification
+    - Use windows_info to identify the OS version and determine the
+      expected boot code for comparison
+    """
+    return session.run_plugin("mbrscan")
+
+
+@mcp.tool()
 def windows_statistics() -> dict:
     """
     Run the statistics plugin to display memory space statistics, showing
