@@ -1620,6 +1620,40 @@ def windows_mbrscan() -> dict:
 
 
 @mcp.tool()
+def windows_truecrypt() -> dict:
+    """
+    Run the truecrypt plugin to search for cached TrueCrypt passphrases
+    remaining in memory.
+
+    Use this tool when the user asks about:
+    - TrueCrypt passphrases or encryption keys in memory
+    - Full-disk encryption password recovery
+    - Cached encryption credentials from TrueCrypt volumes
+    - Evidence of encrypted volume usage on the system
+    - Decryption key extraction for forensic access
+
+    Returns a dict with:
+    - "plugin": "truecrypt"
+    - "results": list of dicts, each containing:
+        "Offset": memory offset where the passphrase was found (str, hex),
+        "Length": length of the passphrase in bytes (int),
+        "Password": the cached passphrase string (str)
+
+    Forensic context:
+    - TrueCrypt caches passphrases in kernel memory while volumes are
+      mounted; this plugin can recover them if the volume was mounted
+      at the time of capture
+    - Recovered passphrases can be used to decrypt TrueCrypt volumes for
+      further forensic examination of their contents
+    - Also works with VeraCrypt in some cases, as it shares the same
+      passphrase caching mechanism
+    - Use windows_pslist to check if TrueCrypt.exe or VeraCrypt.exe
+      processes were running at the time of capture
+    """
+    return session.run_plugin("truecrypt")
+
+
+@mcp.tool()
 def windows_statistics() -> dict:
     """
     Run the statistics plugin to display memory space statistics, showing
