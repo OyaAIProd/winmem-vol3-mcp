@@ -1233,6 +1233,140 @@ def windows_netstat() -> dict:
 
 
 @mcp.tool()
+def windows_filescan() -> dict:
+    """
+    Run the filescan plugin to scan for FILE_OBJECT structures in physical
+    memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Files that were open or referenced on the system
+    - Scanning for file objects in memory
+    - What files were accessed, including deleted or closed files
+    - File paths or file names present in the memory image
+    - Evidence of specific files (malware, documents, logs)
+
+    Returns a dict with:
+    - "plugin": "filescan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the FILE_OBJECT (str, hex),
+        "Name": full file path (str),
+        "Size": file size (int)
+
+    Forensic context:
+    - File objects persist in pool memory even after files are closed,
+      providing evidence of files that were accessed before capture
+    - Search results for known malware filenames, suspicious paths
+      (e.g., temp directories, recycle bin), or sensitive documents
+    - Use windows_handles (Type=File) to determine which processes
+      currently hold open handles to specific files
+    - Cross-reference file paths with windows_dlllist to identify
+      DLLs loaded from unusual locations
+    """
+    return session.run_plugin("filescan")
+
+
+@mcp.tool()
+def windows_dumpfiles() -> dict:
+    """
+    Run the dumpfiles plugin to extract cached file contents from memory,
+    returning metadata about recoverable files.
+
+    Use this tool when the user asks about:
+    - Extracting or recovering files from the memory image
+    - Cached file contents still resident in memory
+    - Dumping specific files by address or for a given process
+    - Recovering deleted or in-use files from memory
+    - File content extraction for forensic evidence
+
+    Returns a dict with:
+    - "plugin": "dumpfiles"
+    - "results": list of dicts, each containing:
+        "Cache": cache type such as SharedCacheMap or DataSectionObject (str),
+        "FileObject": address of the FILE_OBJECT (str, hex),
+        "FileName": path of the cached file (str),
+        "Result": dump status or output file path (str)
+
+    Forensic context:
+    - File dumps are currently metadata-only; actual file extraction to disk
+      requires a configured output directory (planned future enhancement)
+    - SharedCacheMap entries represent files actively cached by the OS,
+      while DataSectionObject entries are memory-mapped file sections
+    - Use windows_filescan to first identify files of interest, then this
+      tool to attempt recovery of their contents
+    - Cross-reference with windows_handles to identify which process had
+      the file open at the time of capture
+    """
+    return session.run_plugin("dumpfiles")
+
+
+@mcp.tool()
+def windows_mutantscan() -> dict:
+    """
+    Run the mutantscan plugin to scan for mutex (mutant) objects in physical
+    memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Mutexes or named mutants on the system
+    - Malware mutex indicators or unique mutex names
+    - Synchronization objects used by processes
+    - Whether a known malware mutex exists in memory
+    - Named kernel objects used for inter-process signaling
+
+    Returns a dict with:
+    - "plugin": "mutantscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the mutant object (str, hex),
+        "Name": name of the mutex (str)
+
+    Forensic context:
+    - Many malware families create uniquely named mutexes to prevent
+      multiple instances; searching for known mutex names is a fast
+      IOC check (e.g., "Global\\MicrosoftUpdateService" used by some RATs)
+    - Use windows_handles (Type=Mutant) to determine which process owns
+      each mutex, linking the mutex back to a specific process
+    - Unnamed mutexes (empty Name field) are common and usually benign;
+      focus investigation on named mutexes with suspicious patterns
+    - Cross-reference mutex names with threat intelligence databases
+      for known malware family indicators
+    """
+    return session.run_plugin("mutantscan")
+
+
+@mcp.tool()
+def windows_symlinkscan() -> dict:
+    """
+    Run the symlinkscan plugin to scan for symbolic link objects in physical
+    memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Symbolic links or object manager symlinks in the kernel
+    - Device name mappings or drive letter assignments
+    - How logical names (e.g., C:) map to physical device paths
+    - Object namespace redirection or aliasing
+    - Potential symlink-based attacks or manipulations
+
+    Returns a dict with:
+    - "plugin": "symlinkscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the symlink object (str, hex),
+        "CreateTime": timestamp when the symlink was created (str),
+        "From Name": source name of the symbolic link (str),
+        "To Name": target path the symlink points to (str)
+
+    Forensic context:
+    - Drive letter mappings (e.g., \\GLOBAL??\\C: -> \\Device\\Harddisk0\\Partition1)
+      reveal the disk and partition layout at the time of capture
+    - Unusual symlinks redirecting system paths may indicate rootkit
+      namespace manipulation to hide files or devices
+    - Compare with windows_devicetree to correlate device names referenced
+      in symlink targets with actual device objects
+    - Use windows_filescan to cross-reference file paths that traverse
+      symlinked directories
+    """
+    return session.run_plugin("symlinkscan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

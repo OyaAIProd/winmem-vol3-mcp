@@ -75,7 +75,7 @@ You can then ask follow-up questions to dig deeper:
 | Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat | 6 / 6 |
 | Network Analysis | netscan, netstat | 2 / 2 |
 | Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner | 8 / 8 |
-| File Analysis | filescan, dumpfiles, symlinkscan, mutantscan | 0 / 4 |
+| File Analysis | filescan, dumpfiles, symlinkscan, mutantscan | 4 / 4 |
 | Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates | 0 / 5 |
 | System Information | info, statistics, crashinfo | 1 / 3 |
 | Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids | 0 / 4 |
