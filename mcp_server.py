@@ -1084,6 +1084,40 @@ def windows_driverscan() -> dict:
 
 
 @mcp.tool()
+def windows_poolscanner() -> dict:
+    """
+    Run the poolscanner plugin as a generic pool tag scanner that finds
+    various kernel objects by their pool allocations.
+
+    Use this tool when the user asks about:
+    - Generic pool tag scanning across all object types
+    - Kernel object discovery by pool tags
+    - A comprehensive scan for all pool-allocated kernel objects
+    - Low-level memory pool analysis
+    - Identifying what kernel objects are allocated in pool memory
+
+    Returns a dict with:
+    - "plugin": "poolscanner"
+    - "results": list of dicts, each containing:
+        "Tag": four-character pool tag (str),
+        "Offset": offset of the pool allocation (str, hex),
+        "Layer": memory layer where the object was found (str),
+        "Name": identified object type or name (str)
+
+    Forensic context:
+    - This is a low-level scanner; prefer specialized tools like
+      windows_psscan, windows_driverscan, or windows_modscan for
+      specific object types as they provide richer output
+    - Useful for discovering object types not covered by other scanners
+      or for validating results from specialized pool scanners
+    - Unknown or suspicious pool tags may indicate custom kernel objects
+      allocated by rootkits
+    - Use windows_bigpools to focus specifically on large pool allocations
+    """
+    return session.run_plugin("poolscanner")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets

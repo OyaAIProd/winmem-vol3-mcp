@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import bigpools, callbacks, devicetree, driverirp, drivermodule, driverscan
+from volatility3.plugins.windows import bigpools, callbacks, devicetree, driverirp, drivermodule, driverscan, poolscanner
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -36,6 +36,12 @@ def run_driverirp(session: Session) -> dict:
     return {"plugin": "driverirp", "results": parse_treegrid(treegrid)}
 
 
+def run_poolscanner(session: Session) -> dict:
+    """Run windows.poolscanner and return generic pool scan results."""
+    treegrid = run_plugin(session, poolscanner.PoolScanner)
+    return {"plugin": "poolscanner", "results": parse_treegrid(treegrid)}
+
+
 def run_driverscan(session: Session) -> dict:
     """Run windows.driverscan and return driver objects found by pool scanning."""
     treegrid = run_plugin(session, driverscan.DriverScan)
@@ -55,4 +61,5 @@ PLUGIN_MAP = {
     "driverirp": run_driverirp,
     "drivermodule": run_drivermodule,
     "driverscan": run_driverscan,
+    "poolscanner": run_poolscanner,
 }
