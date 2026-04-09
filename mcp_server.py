@@ -19,6 +19,13 @@ session = Session(IMAGE_PATH)
 
 
 @mcp.tool()
+def get_image_info() -> dict:
+    """Get system information from the memory image (OS version, architecture, etc.).
+    Call this first to initialize the session and cache configuration for faster subsequent analysis."""
+    return session.run_plugin("info")
+
+
+@mcp.tool()
 def get_processes() -> dict:
     """Return the list of processes from the loaded memory image."""
     return session.run_plugin("pslist")

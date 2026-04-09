@@ -6,13 +6,16 @@ structured results (not raw text).
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from volatility3.framework import automagic, interfaces
 from volatility3.framework.interfaces.renderers import BaseAbsentValue
 from volatility3.framework.renderers import format_hints
 from volatility3.framework.interfaces.configuration import path_join
-from volatility3.plugins.windows import pslist, psscan, pstree
+from volatility3.plugins.windows import info, pslist, psscan, pstree
+
+if TYPE_CHECKING:
+    from session import Session
 
 BASE_CONFIG_PATH = "plugins"
 
@@ -49,31 +52,49 @@ def _noop_progress(percent: float, msg: str = "") -> None:
     """No-op progress callback required by some automagics."""
 
 
-def _run_plugin(ctx: interfaces.context.ContextInterface, plugin_class):
-    """Run automagic and construct a plugin, returning the TreeGrid."""
+def _run_plugin(session: Session, plugin_class):
+    """Run automagic and construct a plugin, returning (TreeGrid, constructed)."""
+    ctx = session.ctx
+    plugin_name = plugin_class.__name__
+    session.apply_config(plugin_name)
+
     available = automagic.available(ctx)
     automagics = automagic.choose_automagic(available, plugin_class)
     automagic.run(automagics, ctx, plugin_class, BASE_CONFIG_PATH, progress_callback=_noop_progress)
-    plugin_config_path = path_join(BASE_CONFIG_PATH, plugin_class.__name__)
+    plugin_config_path = path_join(BASE_CONFIG_PATH, plugin_name)
     constructed = plugin_class(ctx, plugin_config_path, progress_callback=_noop_progress)
-    return constructed.run()
+    treegrid = constructed.run()
+
+    if not session.has_config:
+        session.save_config(dict(constructed.build_configuration()))
+
+    return treegrid
 
 
-def run_pslist(ctx: interfaces.context.ContextInterface) -> dict:
+def run_info(session: Session) -> dict:
+    """Run windows.info and return system information."""
+    treegrid = _run_plugin(session, info.Info)
+    results = {}
+    for row in parse_treegrid(treegrid):
+        results[row["Variable"]] = row["Value"]
+    return {"plugin": "info", "results": results}
+
+
+def run_pslist(session: Session) -> dict:
     """Run windows.pslist and return structured process list."""
-    treegrid = _run_plugin(ctx, pslist.PsList)
+    treegrid = _run_plugin(session, pslist.PsList)
     return {"plugin": "pslist", "results": parse_treegrid(treegrid)}
 
 
-def run_psscan(ctx: interfaces.context.ContextInterface) -> dict:
+def run_psscan(session: Session) -> dict:
     """Run windows.psscan and return process list found by pool scanning."""
-    treegrid = _run_plugin(ctx, psscan.PsScan)
+    treegrid = _run_plugin(session, psscan.PsScan)
     return {"plugin": "psscan", "results": parse_treegrid(treegrid)}
 
 
-def run_pstree(ctx: interfaces.context.ContextInterface) -> dict:
+def run_pstree(session: Session) -> dict:
     """Run windows.pstree and return process tree with depth info."""
-    treegrid = _run_plugin(ctx, pstree.PsTree)
+    treegrid = _run_plugin(session, pstree.PsTree)
     col_names = [col.name for col in treegrid.columns]
     rows: list[dict[str, Any]] = []
 
@@ -91,6 +112,7 @@ def run_pstree(ctx: interfaces.context.ContextInterface) -> dict:
 
 
 PLUGIN_REGISTRY: dict[str, callable] = {
+    "info": run_info,
     "pslist": run_pslist,
     "psscan": run_psscan,
     "pstree": run_pstree,
