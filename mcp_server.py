@@ -832,6 +832,44 @@ def windows_modscan() -> dict:
 
 
 @mcp.tool()
+def windows_verinfo() -> dict:
+    """
+    Run the verinfo plugin to extract PE version information from loaded
+    modules, including version numbers for processes and kernel drivers.
+
+    Use this tool when the user asks about:
+    - Version information of loaded DLLs or executables
+    - PE file version, product version, or build numbers
+    - Whether a specific module is an expected version
+    - Identifying outdated or patched binaries in memory
+    - Verifying module authenticity via version metadata
+
+    Returns a dict with:
+    - "plugin": "verinfo"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Base": base address of the module (str, hex),
+        "Name": module file name (str),
+        "Major": major version number (int),
+        "Minor": minor version number (int),
+        "Product": product version number (int),
+        "Build": build number (int)
+
+    Forensic context:
+    - Mismatched version numbers for system DLLs (e.g., ntdll.dll with an
+      unexpected version) may indicate binary patching or trojanized files
+    - Compare version info against known-good baselines for the OS version
+      identified by windows_info
+    - Use windows_dlllist to get the full path of modules, then this tool
+      to verify their version metadata
+    - Modules with zeroed or absent version info may be custom-compiled
+      malware or debug builds
+    """
+    return session.run_plugin("verinfo")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the

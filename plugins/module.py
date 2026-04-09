@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import dlllist, ldrmodules, modscan, modules
+from volatility3.plugins.windows import dlllist, ldrmodules, modscan, modules, verinfo
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -36,9 +36,16 @@ def run_modscan(session: Session) -> dict:
     return {"plugin": "modscan", "results": parse_treegrid(treegrid)}
 
 
+def run_verinfo(session: Session) -> dict:
+    """Run windows.verinfo and return PE version information."""
+    treegrid = run_plugin(session, verinfo.VerInfo)
+    return {"plugin": "verinfo", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "dlllist": run_dlllist,
     "ldrmodules": run_ldrmodules,
     "modscan": run_modscan,
     "modules": run_modules,
+    "verinfo": run_verinfo,
 }
