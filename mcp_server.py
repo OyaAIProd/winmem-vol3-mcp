@@ -545,6 +545,45 @@ def windows_vadinfo() -> dict:
 
 
 @mcp.tool()
+def windows_vadwalk() -> dict:
+    """
+    Run the vadwalk plugin to walk the VAD tree and display the binary tree
+    structure of virtual address descriptors for each process.
+
+    Use this tool when the user asks about:
+    - VAD tree structure or binary tree layout
+    - Parent, left, and right child relationships between VAD nodes
+    - Low-level virtual memory organization of a process
+    - VAD node addresses and their start/end ranges
+    - Debugging memory layout or verifying VAD tree integrity
+
+    Returns a dict with:
+    - "plugin": "vadwalk"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Offset": VAD node offset (str, hex),
+        "Parent": parent VAD node offset (str, hex),
+        "Left": left child VAD node offset (str, hex),
+        "Right": right child VAD node offset (str, hex),
+        "Start": start address of the region (str, hex),
+        "End": end address of the region (str, hex),
+        "Tag": VAD pool tag (str)
+
+    Forensic context:
+    - A corrupted VAD tree (broken parent/child links) may indicate kernel
+      exploitation or memory corruption attacks
+    - Use windows_vadinfo for richer metadata (protection, mapped files)
+      per VAD entry; this tool focuses on the tree structure itself
+    - Compare VAD node counts between windows_vadwalk and windows_vadinfo
+      to detect inconsistencies that could signal manipulation
+    - Use windows_malfind for targeted detection of suspicious regions
+      rather than walking the entire tree
+    """
+    return session.run_plugin("vadwalk")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
