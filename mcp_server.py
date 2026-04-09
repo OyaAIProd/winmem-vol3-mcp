@@ -390,6 +390,42 @@ def windows_privileges() -> dict:
 
 
 @mcp.tool()
+def windows_sessions() -> dict:
+    """
+    Run the sessions plugin to list processes grouped by their logon session,
+    including session type and associated user name.
+
+    Use this tool when the user asks about:
+    - Who was logged into the system at the time of capture
+    - Which user session a process belongs to
+    - Remote Desktop (RDP) or console sessions
+    - Active logon sessions and their associated processes
+    - Session types (Console, Services, RDP-Tcp)
+
+    Returns a dict with:
+    - "plugin": "sessions"
+    - "results": list of dicts, each containing:
+        "Session ID": terminal session ID (int),
+        "Session Type": session type such as Console or Services (str),
+        "Process ID": process ID (int),
+        "Process": process name (str),
+        "User Name": domain\\username of the session owner (str),
+        "Create Time": process creation timestamp (str)
+
+    Forensic context:
+    - Multiple active RDP-Tcp sessions may indicate lateral movement or
+      unauthorized remote access
+    - Processes in Session 0 (Services) are system-level; user processes
+      typically appear in Session 1+
+    - Compare user names across sessions to detect compromised accounts or
+      unauthorized logon activity
+    - Use windows_pslist for full process details and windows_envars to
+      extract USERNAME/COMPUTERNAME for each session context
+    """
+    return session.run_plugin("sessions")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
