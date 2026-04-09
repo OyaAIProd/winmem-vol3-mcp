@@ -77,7 +77,7 @@ You can then ask follow-up questions to dig deeper:
 | Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner | 8 / 8 |
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan | 4 / 4 |
 | Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates | 5 / 5 |
-| System Information | info, statistics, crashinfo | 1 / 3 |
+| System Information | info, statistics, crashinfo | 3 / 3 |
 | Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids | 0 / 4 |
 
 ## Architecture

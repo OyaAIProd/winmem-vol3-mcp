@@ -93,8 +93,8 @@ Registry sub-plugins use `windows_registry_{name}`.
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
 | `windows.info` | `windows_info` | Done | OS version, architecture, kernel details |
-| `windows.statistics` | `windows_statistics` | Planned | Memory space statistics |
-| `windows.crashinfo` | `windows_crashinfo` | Planned | Windows crash dump information |
+| `windows.statistics` | `windows_statistics` | Done | Memory space statistics |
+| `windows.crashinfo` | `windows_crashinfo` | Done | Windows crash dump information |
 
 ## Security / Malware
 
@@ -110,5 +110,5 @@ Registry sub-plugins use `windows_registry_{name}`.
 ## Summary
 
 - **Total plugins**: 49
-- **Done**: 43 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, File 4, Registry 5, System Info 1)
-- **Planned**: 6
+- **Done**: 45 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, File 4, Registry 5, System Info 3)
+- **Planned**: 4

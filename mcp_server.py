@@ -1545,6 +1545,87 @@ def windows_registry_certificates() -> dict:
 
 
 @mcp.tool()
+def windows_statistics() -> dict:
+    """
+    Run the statistics plugin to display memory space statistics, showing
+    how many pages are valid, swapped, or invalid in the memory image.
+
+    Use this tool when the user asks about:
+    - Memory image quality or completeness
+    - How many valid vs invalid pages are in the memory dump
+    - Swapped or paged-out memory statistics
+    - Overall memory utilization at the time of capture
+    - Whether the memory image has sufficient data for analysis
+
+    Returns a dict with:
+    - "plugin": "statistics"
+    - "results": list of dicts, each containing:
+        "Valid pages (all)": total valid pages (int),
+        "Valid pages (large)": valid large pages (int),
+        "Swapped Pages (all)": total swapped pages (int),
+        "Swapped Pages (large)": swapped large pages (int),
+        "Invalid Pages (all)": total invalid pages (int),
+        "Invalid Pages (large)": invalid large pages (int),
+        "Other Invalid Pages (all)": other invalid pages (int)
+
+    Forensic context:
+    - A high ratio of invalid pages may indicate an incomplete or
+      corrupted memory dump, reducing the reliability of other plugins
+    - Swapped pages represent data that was paged to disk at capture time;
+      this data may be missing from analysis unless the pagefile is available
+    - Run this tool early to assess image quality before investing time
+      in detailed analysis with other plugins
+    - Use windows_info to get OS version context for interpreting the
+      memory layout statistics
+    """
+    return session.run_plugin("statistics")
+
+
+@mcp.tool()
+def windows_crashinfo() -> dict:
+    """
+    Run the crashinfo plugin to parse and display the header information
+    from a Windows crash dump file.
+
+    Use this tool when the user asks about:
+    - Crash dump header or metadata
+    - Whether the memory image is a crash dump format
+    - System time or uptime recorded in the crash dump
+    - Number of processors or machine type from the dump header
+    - Crash dump type (full, kernel, or mini dump)
+
+    Returns a dict with:
+    - "plugin": "crashinfo"
+    - "results": list of dicts, each containing:
+        "Signature": crash dump signature string (str),
+        "MajorVersion": OS major version (int),
+        "MinorVersion": OS minor version (int),
+        "DirectoryTableBase": DTB address (str, hex),
+        "PfnDataBase": PFN database address (str, hex),
+        "PsLoadedModuleList": loaded module list address (str, hex),
+        "PsActiveProcessHead": active process list head (str, hex),
+        "MachineImageType": processor architecture identifier (int),
+        "NumberProcessors": number of processors (int),
+        "KdDebuggerDataBlock": debugger data block address (str, hex),
+        "DumpType": type of crash dump (str),
+        "SystemUpTime": system uptime at crash (str),
+        "Comment": crash dump comment if present (str),
+        "SystemTime": system time at crash (str)
+
+    Forensic context:
+    - This plugin only works with crash dump format images; raw memory
+      images will produce no results
+    - The SystemTime and SystemUpTime fields provide the exact time of
+      the crash, anchoring the forensic timeline
+    - Use windows_info for general OS information that works with all
+      image formats, not just crash dumps
+    - NumberProcessors and MachineImageType help verify the system
+      configuration matches the expected target
+    """
+    return session.run_plugin("crashinfo")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
