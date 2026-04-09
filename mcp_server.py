@@ -68,13 +68,13 @@ def windows_pslist() -> dict:
         "PID": process ID (int),
         "PPID": parent process ID (int),
         "ImageFileName": process name (str),
-        "Offset(V)": virtual offset of EPROCESS (str, hex),
         "Threads": thread count (int),
         "Handles": handle count (int),
         "SessionId": terminal session ID (int or None),
         "Wow64": whether process is 32-bit on 64-bit OS (bool),
         "CreateTime": process creation timestamp (str),
-        "ExitTime": process exit timestamp (str or None)
+        "ExitTime": process exit timestamp (str or None),
+        "File output": file dump status (str)
 
     Forensic context:
     - Compare with windows_psscan results to detect hidden or unlinked processes;
@@ -109,13 +109,13 @@ def windows_psscan() -> dict:
         "PID": process ID (int),
         "PPID": parent process ID (int),
         "ImageFileName": process name (str),
-        "Offset": physical offset of EPROCESS (str, hex),
         "Threads": thread count (int),
         "Handles": handle count (int),
         "SessionId": terminal session ID (int or None),
         "Wow64": whether process is 32-bit on 64-bit OS (bool),
         "CreateTime": process creation timestamp (str),
-        "ExitTime": process exit timestamp (str or None)
+        "ExitTime": process exit timestamp (str or None),
+        "File output": file dump status (str)
 
     Forensic context:
     - Compare this result set against windows_pslist output: any process present
@@ -151,13 +151,15 @@ def windows_pstree() -> dict:
         "PID": process ID (int),
         "PPID": parent process ID (int),
         "ImageFileName": process name (str),
-        "Offset(V)": virtual offset of EPROCESS (str, hex),
         "Threads": thread count (int),
         "Handles": handle count (int),
         "SessionId": terminal session ID (int or None),
         "Wow64": whether process is 32-bit on 64-bit OS (bool),
         "CreateTime": process creation timestamp (str),
         "ExitTime": process exit timestamp (str or None),
+        "Audit": audit name from the SE_AUDIT_PROCESS_CREATION_INFO (str),
+        "Cmd": command line from the process parameters (str),
+        "Path": image path from the process parameters (str),
         "depth": nesting depth in the tree (int, 0 = root process)
 
     Forensic context:
@@ -327,7 +329,6 @@ def windows_joblinks() -> dict:
     Returns a dict with:
     - "plugin": "joblinks"
     - "results": list of dicts, each containing:
-        "Offset(V)": virtual offset of the job object (str, hex),
         "Name": job object name (str),
         "PID": process ID (int),
         "PPID": parent process ID (int),
@@ -445,6 +446,9 @@ def windows_thrdscan() -> dict:
         "PID": owning process ID (int),
         "TID": thread ID (int),
         "StartAddress": thread start address (str, hex),
+        "StartPath": module path containing the start address (str),
+        "Win32StartAddress": Win32 thread start address (str, hex),
+        "Win32StartPath": module path containing the Win32 start address (str),
         "CreateTime": thread creation timestamp (str),
         "ExitTime": thread exit timestamp (str or None)
 
@@ -706,6 +710,7 @@ def windows_dlllist() -> dict:
         "Size": size of the module in memory (str, hex),
         "Name": module file name (str),
         "Path": full path of the loaded module (str),
+        "LoadCount": reference count for the module (int),
         "LoadTime": time the module was loaded (str),
         "File output": file dump status (str)
 
@@ -1249,8 +1254,7 @@ def windows_filescan() -> dict:
     - "plugin": "filescan"
     - "results": list of dicts, each containing:
         "Offset": physical offset of the FILE_OBJECT (str, hex),
-        "Name": full file path (str),
-        "Size": file size (int)
+        "Name": full file path (str)
 
     Forensic context:
     - File objects persist in pool memory even after files are closed,
@@ -1602,9 +1606,17 @@ def windows_mbrscan() -> dict:
         "Full MBR MD5": MD5 hash of the entire MBR (str),
         "PartitionIndex": partition table entry index (int),
         "Bootable": whether the partition is marked bootable (bool),
+        "BootFlag": boot flag value (str),
         "PartitionType": filesystem or partition type (str),
-        "SectorInSize": partition size in sectors (str, hex),
-        "Disasm": disassembly of the boot code (str)
+        "PartitionTypeRaw": raw partition type byte (str),
+        "StartingLBA": starting logical block address (str, hex),
+        "StartingCylinder": starting cylinder number (int),
+        "StartingCHS": starting CHS address (str),
+        "StartingSector": starting sector number (int),
+        "EndingCylinder": ending cylinder number (int),
+        "EndingCHS": ending CHS address (str),
+        "EndingSector": ending sector number (int),
+        "SectorInSize": partition size in sectors (str, hex)
 
     Forensic context:
     - Compare Bootcode MD5 against known-good MBR hashes for the OS
@@ -1751,7 +1763,10 @@ def windows_crashinfo() -> dict:
         "DumpType": type of crash dump (str),
         "SystemUpTime": system uptime at crash (str),
         "Comment": crash dump comment if present (str),
-        "SystemTime": system time at crash (str)
+        "SystemTime": system time at crash (str),
+        "BitmapHeaderSize": bitmap header size for full dumps (int),
+        "BitmapSize": bitmap size for full dumps (int),
+        "BitmapPages": number of bitmap pages (int)
 
     Forensic context:
     - This plugin only works with crash dump format images; raw memory

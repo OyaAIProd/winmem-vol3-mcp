@@ -746,14 +746,14 @@ wheels = [
 
 [[package]]
 name = "volatility3"
-version = "2.7.0"
+version = "2.27.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pefile" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c8/a8/68c5bbc799bd70fb87da2a6ea081200fa1742e2ee47de4680cbd3b1d47b7/volatility3-2.7.0.tar.gz", hash = "sha256:0b219b27b334cda79c0d7e244edba8e6928d9d0852e6d3462ba89e74f7ea92b5", size = 500539, upload-time = "2024-05-29T19:38:11.58Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/94/b5de76a198a0b0b8af49fc6d8da3ddc15a0a791b9ddf09d06045d6a508d9/volatility3-2.27.0.tar.gz", hash = "sha256:12a3fd4c841fadccb6b0bd96e40a99390ca09518e34de0addcbd9ff841a9bc58", size = 1117624, upload-time = "2026-01-29T21:49:15.135Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/ee/732df5a76315beee6df5df0f2d83efb3d601a1b31ce79f19bb5f84eab60c/volatility3-2.7.0-py3-none-any.whl", hash = "sha256:fd28d7040d33884c29beeb06068956c17f79131c641808d8e88faea444666c6d", size = 670046, upload-time = "2024-05-29T19:38:09.603Z" },
+    { url = "https://files.pythonhosted.org/packages/04/52/4348306ba47f8edc75154d77bd4b5528ddadf189ad25540673b89b5a7890/volatility3-2.27.0-py3-none-any.whl", hash = "sha256:9d3693bd3ecf833a966d512247af77ce53c7a6dae0b692c95da1455cd75430d7", size = 1403769, upload-time = "2026-01-29T21:49:13.451Z" },
 ]
 
 [[package]]
@@ -768,5 +768,5 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "mcp", specifier = ">=1.0.0" },
-    { name = "volatility3", specifier = "==2.7.0" },
+    { name = "volatility3", specifier = "==2.27.0" },
 ]
