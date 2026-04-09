@@ -2,6 +2,8 @@
 
 An MCP (Model Context Protocol) server that wraps the [Volatility3](https://github.com/volatilityfoundation/volatility3) memory forensics framework, enabling conversational Windows memory analysis through Claude Desktop.
 
+> **Windows memory images only.** This project exclusively targets Windows memory dumps. All plugins are sourced from `volatility3.plugins.windows.*`. Linux and macOS memory analysis will be addressed in separate projects.
+
 ## Key Features
 
 - **Direct Python API integration** -- calls `volatility3` as a library (`import volatility3`), not via subprocess
@@ -9,6 +11,7 @@ An MCP (Model Context Protocol) server that wraps the [Volatility3](https://gith
 - **Session-based context** -- a single Volatility3 Context is built once at startup and reused across all plugin calls
 - **Result caching** -- plugin results are cached per session to avoid redundant computation
 - **Config caching** -- kernel/layer configuration is saved to `{image}.vol3cfg.json` on first run, skipping expensive PDB download and layer scanning on subsequent starts
+- **Forensic-aware tool docstrings** -- each MCP tool carries a three-layer docstring (trigger patterns, return structure, forensic context) that guides the LLM to select the right tool, interpret results accurately, and autonomously chain multi-step analysis workflows
 
 ## Installation
 
@@ -29,7 +32,7 @@ Add the following to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "volatility": {
+    "winmem-vol3-mcp": {
       "command": "uv",
       "args": ["--directory", "/absolute/path/to/winmem-vol3-mcp", "run", "python", "mcp_server.py"],
       "env": {
@@ -42,37 +45,23 @@ Add the following to your `claude_desktop_config.json`:
 
 `VOL_IMAGE_PATH` must point to an existing Windows memory image file. The server will not start without it.
 
-### Direct Testing
+### Quick Test
 
-```bash
-VOL_IMAGE_PATH=./memory.vmem uv run python -c "
-from session import Session
-s = Session('./memory.vmem')
-result = s.run_plugin('pslist')
-print(result)
-"
-```
-
-### Example Output
+After configuring Claude Desktop, ask Claude to identify the memory image. Claude will call `get_image_info` and return system information:
 
 ```json
 {
-  "plugin": "pslist",
-  "results": [
-    {
-      "PID": 4,
-      "PPID": 0,
-      "ImageFileName": "System",
-      "Offset(V)": "0xfa80018bc040",
-      "Threads": 77,
-      "Handles": 505,
-      "SessionId": null,
-      "Wow64": false,
-      "CreateTime": "2025-07-25 15:07:57",
-      "ExitTime": null,
-      "File output": "Disabled"
-    }
-  ]
+  "plugin": "info",
+  "results": {
+    "Kernel Base": "0xf80002a52000",
+    "DTB": "0x187000",
+    "Is64Bit": true,
+    "IsPAE": false,
+    "NTBuildLab": "7601.17514.amd64fre.win7sp1_rtm.",
+    "NtMajorVersion": 6,
+    "NtMinorVersion": 1,
+    "NtProductType": "NtProductWinNt"
+  }
 }
 ```
 
