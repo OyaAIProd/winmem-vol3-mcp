@@ -82,11 +82,11 @@ Registry sub-plugins use `windows_registry_{name}`.
 
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
-| `windows.registry.hivelist` | `windows_registry_hivelist` | Planned | List registry hives |
-| `windows.registry.hivescan` | `windows_registry_hivescan` | Planned | Scan for registry hives |
-| `windows.registry.printkey` | `windows_registry_printkey` | Planned | Print registry keys and values |
-| `windows.registry.userassist` | `windows_registry_userassist` | Planned | Print UserAssist registry data |
-| `windows.registry.certificates` | `windows_registry_certificates` | Planned | List certificates from registry store |
+| `windows.registry.hivelist` | `windows_registry_hivelist` | Done | List registry hives |
+| `windows.registry.hivescan` | `windows_registry_hivescan` | Done | Scan for registry hives |
+| `windows.registry.printkey` | `windows_registry_printkey` | Done | Print registry keys and values |
+| `windows.registry.userassist` | `windows_registry_userassist` | Done | Print UserAssist registry data |
+| `windows.registry.certificates` | `windows_registry_certificates` | Done | List certificates from registry store |
 
 ## System Information
 
@@ -110,5 +110,5 @@ Registry sub-plugins use `windows_registry_{name}`.
 ## Summary
 
 - **Total plugins**: 49
-- **Done**: 38 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, File 4, System Info 1)
-- **Planned**: 11
+- **Done**: 43 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, File 4, Registry 5, System Info 1)
+- **Planned**: 6
