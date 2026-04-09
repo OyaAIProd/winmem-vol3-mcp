@@ -906,6 +906,41 @@ def windows_iat() -> dict:
 
 
 @mcp.tool()
+def windows_callbacks() -> dict:
+    """
+    Run the callbacks plugin to list kernel callbacks and notification
+    routines registered in the Windows kernel.
+
+    Use this tool when the user asks about:
+    - Kernel callbacks or notification routines
+    - Process/thread/image load notification hooks
+    - Registry change callbacks or filesystem filter callbacks
+    - Rootkit detection via callback table manipulation
+    - What code runs in response to kernel events
+
+    Returns a dict with:
+    - "plugin": "callbacks"
+    - "results": list of dicts, each containing:
+        "Type": callback type such as CreateProcess, CreateThread, LoadImage (str),
+        "Callback": address of the callback function (str, hex),
+        "Module": module that owns the callback (str),
+        "Symbol": resolved symbol name if available (str),
+        "Detail": additional details about the callback (str)
+
+    Forensic context:
+    - Callbacks pointing to unknown or suspicious modules indicate rootkit
+      hooks that intercept kernel events (process creation, image loading)
+    - Compare the Module field against windows_modules to verify the callback
+      belongs to a legitimate loaded driver
+    - CreateProcess and LoadImage callbacks are commonly abused by rootkits
+      to inject code into new processes or intercept DLL loading
+    - Use windows_driverscan to identify the driver object associated with
+      the module hosting the callback
+    """
+    return session.run_plugin("callbacks")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets
