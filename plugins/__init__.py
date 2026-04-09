@@ -12,6 +12,7 @@ from plugins.module import PLUGIN_MAP as _module
 from plugins.network import PLUGIN_MAP as _network
 from plugins.process import PLUGIN_MAP as _process
 from plugins.registry import PLUGIN_MAP as _registry
+from plugins.security import PLUGIN_MAP as _security
 from plugins.sysinfo import PLUGIN_MAP as _sysinfo
 
 PLUGIN_MAP: dict[str, callable] = {
@@ -22,6 +23,7 @@ PLUGIN_MAP: dict[str, callable] = {
     **_network,
     **_process,
     **_registry,
+    **_security,
     **_sysinfo,
 }
 

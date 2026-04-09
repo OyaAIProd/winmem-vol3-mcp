@@ -1,0 +1,23 @@
+"""Security / malware analysis plugin wrappers (skeleton_key_check, mbrscan, ...)."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from volatility3.plugins.windows import skeleton_key_check
+
+from plugins._common import parse_treegrid, run_plugin
+
+if TYPE_CHECKING:
+    from session import Session
+
+
+def run_skeleton_key_check(session: Session) -> dict:
+    """Run windows.skeleton_key_check and return Skeleton Key detection results."""
+    treegrid = run_plugin(session, skeleton_key_check.Skeleton_Key_Check)
+    return {"plugin": "skeleton_key_check", "results": parse_treegrid(treegrid)}
+
+
+PLUGIN_MAP = {
+    "skeleton_key_check": run_skeleton_key_check,
+}

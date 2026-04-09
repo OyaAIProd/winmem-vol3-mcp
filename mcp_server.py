@@ -1545,6 +1545,42 @@ def windows_registry_certificates() -> dict:
 
 
 @mcp.tool()
+def windows_skeleton_key_check() -> dict:
+    """
+    Run the skeleton_key_check plugin to detect the Skeleton Key malware
+    by scanning lsass.exe for patched authentication functions.
+
+    Use this tool when the user asks about:
+    - Skeleton Key malware detection
+    - LSASS authentication tampering or credential theft
+    - Active Directory backdoor indicators
+    - Patched rc4HmacInitialize or rc4HmacDecrypt functions
+    - Domain controller compromise indicators
+
+    Returns a dict with:
+    - "plugin": "skeleton_key_check"
+    - "results": list of dicts, each containing:
+        "PID": process ID of lsass.exe (int),
+        "Process": process name (str),
+        "Skeleton Key Found": whether the Skeleton Key patch was detected (bool),
+        "rc4HmacInitialize": address of rc4HmacInitialize function (str, hex),
+        "rc4HmacDecrypt": address of rc4HmacDecrypt function (str, hex)
+
+    Forensic context:
+    - Skeleton Key is an in-memory patch to LSASS that allows attackers to
+      authenticate as any user with a master password, without modifying
+      actual user credentials
+    - A True value in "Skeleton Key Found" is a definitive indicator of
+      compromise on a domain controller
+    - Use windows_pslist to verify that lsass.exe is running with expected
+      parameters and parent process (should be wininit.exe)
+    - Cross-reference with windows_malfind to check for other code
+      injections in the lsass.exe process
+    """
+    return session.run_plugin("skeleton_key_check")
+
+
+@mcp.tool()
 def windows_statistics() -> dict:
     """
     Run the statistics plugin to display memory space statistics, showing
