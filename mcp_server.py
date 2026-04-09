@@ -685,6 +685,227 @@ def windows_strings() -> dict:
 
 
 @mcp.tool()
+def windows_dlllist() -> dict:
+    """
+    Run the dlllist plugin to list DLLs and loaded modules for each process
+    from the PEB (Process Environment Block) loader data.
+
+    Use this tool when the user asks about:
+    - DLLs or shared libraries loaded by a process
+    - What modules a process has loaded into memory
+    - Suspicious or unexpected DLLs in a process
+    - DLL load order, base addresses, or file paths
+    - DLL hijacking or side-loading indicators
+
+    Returns a dict with:
+    - "plugin": "dlllist"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Base": base address of the loaded module (str, hex),
+        "Size": size of the module in memory (str, hex),
+        "Name": module file name (str),
+        "Path": full path of the loaded module (str),
+        "LoadTime": time the module was loaded (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - DLLs loaded from unusual paths (e.g., temp directories, user profile)
+      are suspicious and may indicate DLL hijacking or malware staging
+    - Compare with windows_ldrmodules to detect discrepancies; modules
+      missing from one loader list but present in another suggest unlinking
+    - Use windows_malfind to check if any loaded module regions have been
+      modified in memory (code patching / hooking)
+    - Cross-reference with windows_cmdline to verify that loaded DLLs match
+      the expected behavior of each process
+    """
+    return session.run_plugin("dlllist")
+
+
+@mcp.tool()
+def windows_ldrmodules() -> dict:
+    """
+    Run the ldrmodules plugin to cross-reference modules across the three
+    PEB loader lists (InLoad, InInit, InMem) to detect unlinked DLLs.
+
+    Use this tool when the user asks about:
+    - Hidden or unlinked DLLs in a process
+    - DLL loader list discrepancies or inconsistencies
+    - Stealthy DLL injection that removes entries from loader lists
+    - Whether all loaded modules appear in all three PEB lists
+    - Rootkit or malware hiding techniques at the module level
+
+    Returns a dict with:
+    - "plugin": "ldrmodules"
+    - "results": list of dicts, each containing:
+        "Pid": process ID (int),
+        "Process": process name (str),
+        "Base": base address of the module (str, hex),
+        "InLoad": present in InLoadOrderModuleList (bool),
+        "InInit": present in InInitializationOrderModuleList (bool),
+        "InMem": present in InMemoryOrderModuleList (bool),
+        "MappedPath": file path from the VAD (str)
+
+    Forensic context:
+    - A module with False in any of InLoad/InInit/InMem has been unlinked
+      from that loader list, which is a classic DLL hiding technique
+    - Legitimate modules should appear in all three lists; any discrepancy
+      warrants investigation
+    - Compare with windows_dlllist which only reads InLoadOrderModuleList;
+      this tool provides a more complete view
+    - Use windows_malfind to check if the unlinked module's memory region
+      contains injected or modified code
+    """
+    return session.run_plugin("ldrmodules")
+
+
+@mcp.tool()
+def windows_modules() -> dict:
+    """
+    Run the modules plugin to list kernel modules loaded via the
+    PsLoadedModuleList, showing drivers and kernel extensions.
+
+    Use this tool when the user asks about:
+    - Loaded kernel drivers or kernel modules
+    - Which drivers are loaded on the system
+    - Driver base addresses, sizes, or file paths
+    - Kernel-level rootkit detection via suspicious drivers
+    - System driver inventory
+
+    Returns a dict with:
+    - "plugin": "modules"
+    - "results": list of dicts, each containing:
+        "Offset": module list entry offset (str, hex),
+        "Base": base address of the kernel module (str, hex),
+        "Size": size of the module in memory (str, hex),
+        "Name": module file name (str),
+        "Path": full path of the kernel module (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Kernel modules loaded from non-standard paths (outside
+      \\SystemRoot\\system32\\drivers\\) may indicate rootkit drivers
+    - Compare with windows_modscan to detect hidden kernel modules that
+      have been unlinked from the loaded module list
+    - Use windows_driverscan to correlate driver objects with loaded modules
+    - Cross-reference module base addresses with windows_ssdt to identify
+      which module handles each system call
+    """
+    return session.run_plugin("modules")
+
+
+@mcp.tool()
+def windows_modscan() -> dict:
+    """
+    Run the modscan plugin to scan for kernel modules by pool tag in physical
+    memory, independent of the OS-maintained module list.
+
+    Use this tool when the user asks about:
+    - Hidden or unlinked kernel modules or drivers
+    - Kernel rootkit detection via module hiding
+    - Drivers that may have been removed from the loaded module list
+    - A more thorough kernel module scan than the standard list
+    - Previously loaded and unloaded kernel modules
+
+    Returns a dict with:
+    - "plugin": "modscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the module entry (str, hex),
+        "Base": base address of the kernel module (str, hex),
+        "Size": size of the module in memory (str, hex),
+        "Name": module file name (str),
+        "Path": full path of the kernel module (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Compare with windows_modules: a module found here but missing from
+      windows_modules was unlinked from the loaded module list, indicating
+      a kernel rootkit hiding its driver
+    - Unloaded drivers still leave pool tag artifacts, so this tool can
+      find drivers that were loaded temporarily and then removed
+    - Use windows_driverscan to correlate driver objects with discovered
+      modules for a complete driver analysis
+    - Cross-reference suspicious module base addresses with windows_ssdt
+      to detect system call hooking
+    """
+    return session.run_plugin("modscan")
+
+
+@mcp.tool()
+def windows_verinfo() -> dict:
+    """
+    Run the verinfo plugin to extract PE version information from loaded
+    modules, including version numbers for processes and kernel drivers.
+
+    Use this tool when the user asks about:
+    - Version information of loaded DLLs or executables
+    - PE file version, product version, or build numbers
+    - Whether a specific module is an expected version
+    - Identifying outdated or patched binaries in memory
+    - Verifying module authenticity via version metadata
+
+    Returns a dict with:
+    - "plugin": "verinfo"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Base": base address of the module (str, hex),
+        "Name": module file name (str),
+        "Major": major version number (int),
+        "Minor": minor version number (int),
+        "Product": product version number (int),
+        "Build": build number (int)
+
+    Forensic context:
+    - Mismatched version numbers for system DLLs (e.g., ntdll.dll with an
+      unexpected version) may indicate binary patching or trojanized files
+    - Compare version info against known-good baselines for the OS version
+      identified by windows_info
+    - Use windows_dlllist to get the full path of modules, then this tool
+      to verify their version metadata
+    - Modules with zeroed or absent version info may be custom-compiled
+      malware or debug builds
+    """
+    return session.run_plugin("verinfo")
+
+
+@mcp.tool()
+def windows_iat() -> dict:
+    """
+    Run the iat plugin to extract the Import Address Table (IAT) from loaded
+    modules, listing API functions imported from external libraries.
+
+    Use this tool when the user asks about:
+    - API functions imported by a process or module
+    - Import Address Table entries or imported DLL functions
+    - What Windows API calls a process is set up to use
+    - IAT hooking detection (function addresses pointing outside the library)
+    - Behavioral analysis based on imported functions
+
+    Returns a dict with:
+    - "plugin": "iat"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Name": module name that imports the function (str),
+        "Library": library providing the imported function (str),
+        "Bound": whether the import is bound (bool),
+        "Function": imported function name (str),
+        "Address": resolved function address (str, hex)
+
+    Forensic context:
+    - Suspicious imports like VirtualAllocEx, WriteProcessMemory,
+      CreateRemoteThread indicate process injection capability
+    - IAT hooking: if the Address field points outside the expected Library
+      module range, the import has been redirected (API hooking)
+    - Use windows_dlllist to verify the base address range of each Library,
+      then compare with the resolved Address to detect hooks
+    - Cross-reference imported functions with windows_malfind results to
+      understand what capabilities injected code may leverage
+    """
+    return session.run_plugin("iat")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
