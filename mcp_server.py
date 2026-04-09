@@ -760,6 +760,41 @@ def windows_ldrmodules() -> dict:
 
 
 @mcp.tool()
+def windows_modules() -> dict:
+    """
+    Run the modules plugin to list kernel modules loaded via the
+    PsLoadedModuleList, showing drivers and kernel extensions.
+
+    Use this tool when the user asks about:
+    - Loaded kernel drivers or kernel modules
+    - Which drivers are loaded on the system
+    - Driver base addresses, sizes, or file paths
+    - Kernel-level rootkit detection via suspicious drivers
+    - System driver inventory
+
+    Returns a dict with:
+    - "plugin": "modules"
+    - "results": list of dicts, each containing:
+        "Offset": module list entry offset (str, hex),
+        "Base": base address of the kernel module (str, hex),
+        "Size": size of the module in memory (str, hex),
+        "Name": module file name (str),
+        "Path": full path of the kernel module (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Kernel modules loaded from non-standard paths (outside
+      \\SystemRoot\\system32\\drivers\\) may indicate rootkit drivers
+    - Compare with windows_modscan to detect hidden kernel modules that
+      have been unlinked from the loaded module list
+    - Use windows_driverscan to correlate driver objects with loaded modules
+    - Cross-reference module base addresses with windows_ssdt to identify
+      which module handles each system call
+    """
+    return session.run_plugin("modules")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
