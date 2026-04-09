@@ -8,6 +8,7 @@ An MCP (Model Context Protocol) server that wraps the [Volatility3](https://gith
 - **Structured output** -- TreeGrid results are parsed into typed JSON-serializable dicts, not raw text
 - **Session-based context** -- a single Volatility3 Context is built once at startup and reused across all plugin calls
 - **Result caching** -- plugin results are cached per session to avoid redundant computation
+- **Config caching** -- kernel/layer configuration is saved to `{image}.vol3cfg.json` on first run, skipping expensive PDB download and layer scanning on subsequent starts
 
 ## Installation
 
@@ -30,7 +31,7 @@ Add the following to your `claude_desktop_config.json`:
   "mcpServers": {
     "volatility": {
       "command": "uv",
-      "args": ["run", "python", "/absolute/path/to/mcp_server.py"],
+      "args": ["--directory", "/absolute/path/to/winmem-vol3-mcp", "run", "python", "mcp_server.py"],
       "env": {
         "VOL_IMAGE_PATH": "/absolute/path/to/memory.vmem"
       }
@@ -79,7 +80,10 @@ print(result)
 
 | MCP Tool | Volatility3 Plugin | Description |
 |---|---|---|
+| `get_image_info` | `windows.info` | OS version, architecture, kernel base (call first to cache config) |
 | `get_processes` | `windows.pslist` | List running processes |
+| `scan_processes` | `windows.psscan` | Pool tag scanning (finds hidden/unlinked processes) |
+| `get_process_tree` | `windows.pstree` | Process tree with parent-child hierarchy |
 
 ## Architecture
 
@@ -88,7 +92,8 @@ Claude Desktop  <-->  MCP Server (stdio)  <-->  volatility3 (Python import)
                             |
                          Session
                             +-- Context (built once, reused)
-                            +-- Cache (plugin name -> result)
+                            +-- Config cache ({image}.vol3cfg.json)
+                            +-- Result cache (plugin name -> result)
 ```
 
 A single memory image is fixed per server session. This is intentional -- it ensures all plugin results within a session refer to exactly one memory image, maintaining analytical rigor.
