@@ -1,0 +1,28 @@
+"""MCP server for Volatility3 memory forensics."""
+
+import os
+import sys
+
+from mcp.server.fastmcp import FastMCP
+from session import Session
+
+IMAGE_PATH = os.environ.get("VOL_IMAGE_PATH", "")
+if not IMAGE_PATH or not os.path.isfile(IMAGE_PATH):
+    print(
+        f"VOL_IMAGE_PATH is not set or file does not exist: {IMAGE_PATH!r}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+mcp = FastMCP("volatility-mcp")
+session = Session(IMAGE_PATH)
+
+
+@mcp.tool()
+def get_processes() -> dict:
+    """Return the list of processes from the loaded memory image."""
+    return session.run_plugin("pslist")
+
+
+if __name__ == "__main__":
+    mcp.run()
