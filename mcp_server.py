@@ -906,6 +906,253 @@ def windows_iat() -> dict:
 
 
 @mcp.tool()
+def windows_callbacks() -> dict:
+    """
+    Run the callbacks plugin to list kernel callbacks and notification
+    routines registered in the Windows kernel.
+
+    Use this tool when the user asks about:
+    - Kernel callbacks or notification routines
+    - Process/thread/image load notification hooks
+    - Registry change callbacks or filesystem filter callbacks
+    - Rootkit detection via callback table manipulation
+    - What code runs in response to kernel events
+
+    Returns a dict with:
+    - "plugin": "callbacks"
+    - "results": list of dicts, each containing:
+        "Type": callback type such as CreateProcess, CreateThread, LoadImage (str),
+        "Callback": address of the callback function (str, hex),
+        "Module": module that owns the callback (str),
+        "Symbol": resolved symbol name if available (str),
+        "Detail": additional details about the callback (str)
+
+    Forensic context:
+    - Callbacks pointing to unknown or suspicious modules indicate rootkit
+      hooks that intercept kernel events (process creation, image loading)
+    - Compare the Module field against windows_modules to verify the callback
+      belongs to a legitimate loaded driver
+    - CreateProcess and LoadImage callbacks are commonly abused by rootkits
+      to inject code into new processes or intercept DLL loading
+    - Use windows_driverscan to identify the driver object associated with
+      the module hosting the callback
+    """
+    return session.run_plugin("callbacks")
+
+
+@mcp.tool()
+def windows_devicetree() -> dict:
+    """
+    Run the devicetree plugin to list the device tree showing relationships
+    between drivers and their attached device objects.
+
+    Use this tool when the user asks about:
+    - Device objects and their associated drivers
+    - Driver-device attachment chains or device stacks
+    - Which drivers handle specific device types
+    - Filter drivers or device layering in the I/O stack
+    - Rootkit detection via rogue device attachments
+
+    Returns a dict with:
+    - "plugin": "devicetree"
+    - "results": list of dicts, each containing:
+        "Offset": device or driver object offset (str, hex),
+        "Type": object type, either Driver or Device (str),
+        "DriverName": name of the owning driver (str),
+        "DeviceName": name of the device object (str),
+        "DriverNameOfAttDevice": driver of the attached device (str),
+        "DeviceType": device type classification (str)
+
+    Forensic context:
+    - Unexpected devices attached to legitimate driver stacks may indicate
+      filter driver rootkits intercepting I/O operations
+    - Compare driver names against windows_modules and windows_driverscan
+      to verify all device-owning drivers are legitimate
+    - Filesystem filter drivers (attached to \\FileSystem\\) are commonly
+      used by rootkits to hide files from directory listings
+    - Use windows_driverirp to examine the IRP handlers of suspicious
+      drivers found in the device tree
+    """
+    return session.run_plugin("devicetree")
+
+
+@mcp.tool()
+def windows_driverirp() -> dict:
+    """
+    Run the driverirp plugin to list IRP (I/O Request Packet) major function
+    handlers for each driver, showing which code handles each I/O operation.
+
+    Use this tool when the user asks about:
+    - IRP handlers or I/O dispatch routines for drivers
+    - Which function handles read, write, or device control for a driver
+    - IRP hooking or driver dispatch table manipulation
+    - Rootkit detection via tampered IRP handlers
+    - Driver behavior analysis through its dispatch table
+
+    Returns a dict with:
+    - "plugin": "driverirp"
+    - "results": list of dicts, each containing:
+        "Offset": driver object offset (str, hex),
+        "Driver Name": name of the driver (str),
+        "IRP": IRP major function name such as IRP_MJ_CREATE (str),
+        "Address": address of the handler function (str, hex),
+        "Module": module containing the handler (str),
+        "Symbol": resolved symbol name if available (str)
+
+    Forensic context:
+    - IRP handlers pointing outside the owning driver's module range indicate
+      IRP hooking, a common rootkit technique to intercept I/O operations
+    - Compare the Module field with the Driver Name: mismatches suggest a
+      different module has hooked the driver's dispatch table
+    - Use windows_modules to verify the expected address range for each
+      driver module and detect out-of-range handler addresses
+    - Cross-reference with windows_devicetree to understand the full I/O
+      stack and identify which drivers are layered together
+    """
+    return session.run_plugin("driverirp")
+
+
+@mcp.tool()
+def windows_drivermodule() -> dict:
+    """
+    Run the drivermodule plugin to detect drivers that are not backed by
+    a loaded kernel module, indicating potentially hidden rootkit drivers.
+
+    Use this tool when the user asks about:
+    - Hidden or orphaned driver modules
+    - Drivers without a corresponding loaded kernel module
+    - Rootkit driver detection or driver integrity checks
+    - Whether all active drivers map to legitimate modules
+    - Drivers that may have been loaded and then hidden
+
+    Returns a dict with:
+    - "plugin": "drivermodule"
+    - "results": list of dicts, each containing:
+        "Offset": driver object offset (str, hex),
+        "Known Exception": whether this is a known benign exception (bool),
+        "Driver Name": name of the driver (str),
+        "Service Key": registry service key for the driver (str),
+        "Alternative Name": alternative module name if found (str)
+
+    Forensic context:
+    - Drivers with no matching module in windows_modules and Known Exception
+      set to False are strong rootkit indicators
+    - Known Exception=True entries are legitimate drivers that are expected
+      to appear without a backing module (e.g., certain Microsoft drivers)
+    - Use windows_driverscan to get the full driver object details for any
+      suspicious entries discovered here
+    - Cross-reference with windows_callbacks and windows_ssdt to determine
+      if the hidden driver has hooked any kernel functions
+    """
+    return session.run_plugin("drivermodule")
+
+
+@mcp.tool()
+def windows_driverscan() -> dict:
+    """
+    Run the driverscan plugin to scan for driver objects in physical memory
+    using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Driver objects loaded on the system
+    - Scanning for all drivers including potentially hidden ones
+    - Driver start addresses, sizes, or service key names
+    - Comprehensive driver inventory from physical memory
+    - Comparing against the loaded module list for discrepancies
+
+    Returns a dict with:
+    - "plugin": "driverscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the driver object (str, hex),
+        "Start": driver entry point address (str, hex),
+        "Size": driver size in memory (str, hex),
+        "Service Key": registry service key name (str),
+        "Driver Name": driver object name (str),
+        "Name": short name of the driver (str)
+
+    Forensic context:
+    - Drivers found here but missing from windows_modules may have been
+      unlinked from the loaded module list (rootkit hiding technique)
+    - Compare with windows_drivermodule to identify drivers without a
+      backing kernel module
+    - Use windows_driverirp to examine the IRP dispatch table of any
+      suspicious drivers discovered through this scan
+    - Cross-reference Start addresses with windows_ssdt to determine if
+      a driver provides any system call handlers
+    """
+    return session.run_plugin("driverscan")
+
+
+@mcp.tool()
+def windows_poolscanner() -> dict:
+    """
+    Run the poolscanner plugin as a generic pool tag scanner that finds
+    various kernel objects by their pool allocations.
+
+    Use this tool when the user asks about:
+    - Generic pool tag scanning across all object types
+    - Kernel object discovery by pool tags
+    - A comprehensive scan for all pool-allocated kernel objects
+    - Low-level memory pool analysis
+    - Identifying what kernel objects are allocated in pool memory
+
+    Returns a dict with:
+    - "plugin": "poolscanner"
+    - "results": list of dicts, each containing:
+        "Tag": four-character pool tag (str),
+        "Offset": offset of the pool allocation (str, hex),
+        "Layer": memory layer where the object was found (str),
+        "Name": identified object type or name (str)
+
+    Forensic context:
+    - This is a low-level scanner; prefer specialized tools like
+      windows_psscan, windows_driverscan, or windows_modscan for
+      specific object types as they provide richer output
+    - Useful for discovering object types not covered by other scanners
+      or for validating results from specialized pool scanners
+    - Unknown or suspicious pool tags may indicate custom kernel objects
+      allocated by rootkits
+    - Use windows_bigpools to focus specifically on large pool allocations
+    """
+    return session.run_plugin("poolscanner")
+
+
+@mcp.tool()
+def windows_ssdt() -> dict:
+    """
+    Run the ssdt plugin to list the System Service Descriptor Table (SSDT),
+    mapping system call indices to their handler addresses and modules.
+
+    Use this tool when the user asks about:
+    - System call table or SSDT entries
+    - System call hooking or SSDT patching detection
+    - Which module handles each system call (syscall)
+    - Kernel-level API hooking indicators
+    - System call dispatch table integrity
+
+    Returns a dict with:
+    - "plugin": "ssdt"
+    - "results": list of dicts, each containing:
+        "Index": system call index number (int),
+        "Address": address of the system call handler (str, hex),
+        "Module": module containing the handler (str),
+        "Symbol": resolved symbol name such as NtCreateFile (str)
+
+    Forensic context:
+    - All SSDT entries should point to ntoskrnl.exe or win32k.sys; entries
+      pointing to other modules indicate SSDT hooking by a rootkit
+    - Compare Module values against windows_modules to verify the handler
+      belongs to a legitimate kernel module
+    - SSDT hooking was common in older rootkits (pre-PatchGuard); on 64-bit
+      Windows with PatchGuard, SSDT hooks are rarer but still possible via
+      PatchGuard bypass techniques
+    - Use windows_callbacks for detecting notification-based hooks, which
+      are more common on modern Windows than SSDT hooking
+    """
+    return session.run_plugin("ssdt")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets

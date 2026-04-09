@@ -18,56 +18,56 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.pslist` | `windows_pslist` | Done | List processes via active process linked list |
 | `windows.psscan` | `windows_psscan` | Done | Scan for processes by pool tag (finds hidden) |
 | `windows.pstree` | `windows_pstree` | Done | Process tree with parent-child hierarchy |
-| `windows.cmdline` | `windows_cmdline` | Done | List process command line arguments |
-| `windows.sessions` | `windows_sessions` | Done | List processes with session information |
-| `windows.getsids` | `windows_getsids` | Done | Print SIDs owning each process |
-| `windows.privileges` | `windows_privileges` | Done | List process token privileges |
-| `windows.envars` | `windows_envars` | Done | Display process environment variables |
-| `windows.handles` | `windows_handles` | Done | List process open handles |
-| `windows.joblinks` | `windows_joblinks` | Done | Print process job link information |
-| `windows.thrdscan` | `windows_thrdscan` | Done | Scan for Windows threads |
+| `windows.cmdline` | `windows_cmdline` | Planned | List process command line arguments |
+| `windows.sessions` | `windows_sessions` | Planned | List processes with session information |
+| `windows.getsids` | `windows_getsids` | Planned | Print SIDs owning each process |
+| `windows.privileges` | `windows_privileges` | Planned | List process token privileges |
+| `windows.envars` | `windows_envars` | Planned | Display process environment variables |
+| `windows.handles` | `windows_handles` | Planned | List process open handles |
+| `windows.joblinks` | `windows_joblinks` | Planned | Print process job link information |
+| `windows.thrdscan` | `windows_thrdscan` | Planned | Scan for Windows threads |
 
 ## Memory Analysis
 
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
-| `windows.malfind` | `windows_malfind` | Done | Detect potentially injected code in process memory |
-| `windows.vadinfo` | `windows_vadinfo` | Done | List process memory ranges (VAD) |
-| `windows.vadwalk` | `windows_vadwalk` | Done | Walk the VAD tree |
-| `windows.memmap` | `windows_memmap` | Done | Print the memory map |
-| `windows.virtmap` | `windows_virtmap` | Done | List virtual mapped sections |
-| `windows.strings` | `windows_strings` | Done | Map strings output to processes |
+| `windows.malfind` | `windows_malfind` | Planned | Detect potentially injected code in process memory |
+| `windows.vadinfo` | `windows_vadinfo` | Planned | List process memory ranges (VAD) |
+| `windows.vadwalk` | `windows_vadwalk` | Planned | Walk the VAD tree |
+| `windows.memmap` | `windows_memmap` | Planned | Print the memory map |
+| `windows.virtmap` | `windows_virtmap` | Planned | List virtual mapped sections |
+| `windows.strings` | `windows_strings` | Planned | Map strings output to processes |
 
 ## Module / DLL Analysis
 
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
-| `windows.dlllist` | `windows_dlllist` | Done | List loaded modules per process |
-| `windows.ldrmodules` | `windows_ldrmodules` | Done | List loaded modules (detects unlinked DLLs) |
-| `windows.modules` | `windows_modules` | Done | List loaded kernel modules |
-| `windows.modscan` | `windows_modscan` | Done | Scan for kernel modules by pool tag |
-| `windows.verinfo` | `windows_verinfo` | Done | List version information from PE files |
-| `windows.iat` | `windows_iat` | Done | Extract Import Address Table |
+| `windows.dlllist` | `windows_dlllist` | Planned | List loaded modules per process |
+| `windows.ldrmodules` | `windows_ldrmodules` | Planned | List loaded modules (detects unlinked DLLs) |
+| `windows.modules` | `windows_modules` | Planned | List loaded kernel modules |
+| `windows.modscan` | `windows_modscan` | Planned | Scan for kernel modules by pool tag |
+| `windows.verinfo` | `windows_verinfo` | Planned | List version information from PE files |
+| `windows.iat` | `windows_iat` | Planned | Extract Import Address Table |
 
 ## Network Analysis
 
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
-| `windows.netscan` | `windows_netscan` | Done | Scan for network objects by pool tag |
-| `windows.netstat` | `windows_netstat` | Done | Traverse network tracking structures |
+| `windows.netscan` | `windows_netscan` | Planned | Scan for network objects by pool tag |
+| `windows.netstat` | `windows_netstat` | Planned | Traverse network tracking structures |
 
 ## Kernel / Driver Analysis
 
 | Volatility3 Plugin | MCP Tool Name | Status | Description |
 |---|---|---|---|
 | `windows.bigpools` | `windows_bigpools` | Done | List big page pool allocations |
-| `windows.callbacks` | `windows_callbacks` | Planned | List kernel callbacks and notification routines |
-| `windows.driverscan` | `windows_driverscan` | Planned | Scan for driver objects |
-| `windows.driverirp` | `windows_driverirp` | Planned | List IRPs for drivers |
-| `windows.drivermodule` | `windows_drivermodule` | Planned | Detect hidden driver modules |
-| `windows.devicetree` | `windows_devicetree` | Planned | List device tree by drivers |
-| `windows.ssdt` | `windows_ssdt` | Planned | List system call table |
-| `windows.poolscanner` | `windows_poolscanner` | Planned | Generic pool scanner |
+| `windows.callbacks` | `windows_callbacks` | Done | List kernel callbacks and notification routines |
+| `windows.driverscan` | `windows_driverscan` | Done | Scan for driver objects |
+| `windows.driverirp` | `windows_driverirp` | Done | List IRPs for drivers |
+| `windows.drivermodule` | `windows_drivermodule` | Done | Detect hidden driver modules |
+| `windows.devicetree` | `windows_devicetree` | Done | List device tree by drivers |
+| `windows.ssdt` | `windows_ssdt` | Done | List system call table |
+| `windows.poolscanner` | `windows_poolscanner` | Done | Generic pool scanner |
 
 ## File Analysis
 
@@ -110,5 +110,5 @@ Registry sub-plugins use `windows_registry_{name}`.
 ## Summary
 
 - **Total plugins**: 49
-- **Done**: 27 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 1, System Info 1)
-- **Planned**: 22
+- **Done**: 34 (Process 11, Memory 6, Module/DLL 6, Network 2, Kernel 8, System Info 1)
+- **Planned**: 15
