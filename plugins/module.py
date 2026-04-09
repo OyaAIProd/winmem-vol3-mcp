@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import dlllist, ldrmodules, modules
+from volatility3.plugins.windows import dlllist, ldrmodules, modscan, modules
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -30,8 +30,15 @@ def run_modules(session: Session) -> dict:
     return {"plugin": "modules", "results": parse_treegrid(treegrid)}
 
 
+def run_modscan(session: Session) -> dict:
+    """Run windows.modscan and return kernel modules found by pool scanning."""
+    treegrid = run_plugin(session, modscan.ModScan)
+    return {"plugin": "modscan", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "dlllist": run_dlllist,
     "ldrmodules": run_ldrmodules,
+    "modscan": run_modscan,
     "modules": run_modules,
 }

@@ -795,6 +795,43 @@ def windows_modules() -> dict:
 
 
 @mcp.tool()
+def windows_modscan() -> dict:
+    """
+    Run the modscan plugin to scan for kernel modules by pool tag in physical
+    memory, independent of the OS-maintained module list.
+
+    Use this tool when the user asks about:
+    - Hidden or unlinked kernel modules or drivers
+    - Kernel rootkit detection via module hiding
+    - Drivers that may have been removed from the loaded module list
+    - A more thorough kernel module scan than the standard list
+    - Previously loaded and unloaded kernel modules
+
+    Returns a dict with:
+    - "plugin": "modscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the module entry (str, hex),
+        "Base": base address of the kernel module (str, hex),
+        "Size": size of the module in memory (str, hex),
+        "Name": module file name (str),
+        "Path": full path of the kernel module (str),
+        "File output": file dump status (str)
+
+    Forensic context:
+    - Compare with windows_modules: a module found here but missing from
+      windows_modules was unlinked from the loaded module list, indicating
+      a kernel rootkit hiding its driver
+    - Unloaded drivers still leave pool tag artifacts, so this tool can
+      find drivers that were loaded temporarily and then removed
+    - Use windows_driverscan to correlate driver objects with discovered
+      modules for a complete driver analysis
+    - Cross-reference suspicious module base addresses with windows_ssdt
+      to detect system call hooking
+    """
+    return session.run_plugin("modscan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
