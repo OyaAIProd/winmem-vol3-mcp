@@ -1048,6 +1048,42 @@ def windows_drivermodule() -> dict:
 
 
 @mcp.tool()
+def windows_driverscan() -> dict:
+    """
+    Run the driverscan plugin to scan for driver objects in physical memory
+    using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Driver objects loaded on the system
+    - Scanning for all drivers including potentially hidden ones
+    - Driver start addresses, sizes, or service key names
+    - Comprehensive driver inventory from physical memory
+    - Comparing against the loaded module list for discrepancies
+
+    Returns a dict with:
+    - "plugin": "driverscan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the driver object (str, hex),
+        "Start": driver entry point address (str, hex),
+        "Size": driver size in memory (str, hex),
+        "Service Key": registry service key name (str),
+        "Driver Name": driver object name (str),
+        "Name": short name of the driver (str)
+
+    Forensic context:
+    - Drivers found here but missing from windows_modules may have been
+      unlinked from the loaded module list (rootkit hiding technique)
+    - Compare with windows_drivermodule to identify drivers without a
+      backing kernel module
+    - Use windows_driverirp to examine the IRP dispatch table of any
+      suspicious drivers discovered through this scan
+    - Cross-reference Start addresses with windows_ssdt to determine if
+      a driver provides any system call handlers
+    """
+    return session.run_plugin("driverscan")
+
+
+@mcp.tool()
 def windows_netscan() -> dict:
     """
     Run the netscan plugin to find network connections and listening sockets
