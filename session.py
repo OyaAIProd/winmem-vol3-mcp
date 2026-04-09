@@ -5,7 +5,7 @@ from pathlib import Path
 
 from volatility3.framework import contexts, interfaces
 from volatility3.framework.interfaces.configuration import HierarchicalDict, path_join
-from plugins import PLUGIN_REGISTRY, BASE_CONFIG_PATH
+from plugins import PLUGIN_MAP, BASE_CONFIG_PATH
 
 
 class Session:
@@ -50,8 +50,8 @@ class Session:
         """Run a plugin by name, returning cached results if available."""
         if plugin_name in self._cache:
             return self._cache[plugin_name]
-        if plugin_name not in PLUGIN_REGISTRY:
+        if plugin_name not in PLUGIN_MAP:
             raise ValueError(f"Unknown plugin: {plugin_name}")
-        result = PLUGIN_REGISTRY[plugin_name](self)
+        result = PLUGIN_MAP[plugin_name](self)
         self._cache[plugin_name] = result
         return result

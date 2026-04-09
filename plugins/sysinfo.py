@@ -21,6 +21,6 @@ def run_info(session: Session) -> dict:
     return {"plugin": "info", "results": results}
 
 
-REGISTRY = {
+PLUGIN_MAP = {
     "info": run_info,
 }

@@ -48,7 +48,7 @@ def run_strings(session: Session) -> dict:
     return {"plugin": "strings", "results": parse_treegrid(treegrid)}
 
 
-REGISTRY = {
+PLUGIN_MAP = {
     "malfind": run_malfind,
     "memmap": run_memmap,
     "strings": run_strings,

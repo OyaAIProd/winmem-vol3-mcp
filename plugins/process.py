@@ -91,7 +91,7 @@ def run_sessions(session: Session) -> dict:
     return {"plugin": "sessions", "results": parse_treegrid(treegrid)}
 
 
-REGISTRY = {
+PLUGIN_MAP = {
     "cmdline": run_cmdline,
     "envars": run_envars,
     "getsids": run_getsids,
