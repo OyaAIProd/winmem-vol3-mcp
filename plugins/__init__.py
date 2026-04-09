@@ -5,6 +5,7 @@ functions. This package aggregates them into a single PLUGIN_MAP.
 """
 
 from plugins._common import BASE_CONFIG_PATH
+from plugins.file import PLUGIN_MAP as _file
 from plugins.kernel import PLUGIN_MAP as _kernel
 from plugins.memory import PLUGIN_MAP as _memory
 from plugins.module import PLUGIN_MAP as _module
@@ -13,6 +14,7 @@ from plugins.process import PLUGIN_MAP as _process
 from plugins.sysinfo import PLUGIN_MAP as _sysinfo
 
 PLUGIN_MAP: dict[str, callable] = {
+    **_file,
     **_kernel,
     **_memory,
     **_module,

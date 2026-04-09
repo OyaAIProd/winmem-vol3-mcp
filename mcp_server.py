@@ -1233,6 +1233,39 @@ def windows_netstat() -> dict:
 
 
 @mcp.tool()
+def windows_filescan() -> dict:
+    """
+    Run the filescan plugin to scan for FILE_OBJECT structures in physical
+    memory using pool tag scanning.
+
+    Use this tool when the user asks about:
+    - Files that were open or referenced on the system
+    - Scanning for file objects in memory
+    - What files were accessed, including deleted or closed files
+    - File paths or file names present in the memory image
+    - Evidence of specific files (malware, documents, logs)
+
+    Returns a dict with:
+    - "plugin": "filescan"
+    - "results": list of dicts, each containing:
+        "Offset": physical offset of the FILE_OBJECT (str, hex),
+        "Name": full file path (str),
+        "Size": file size (int)
+
+    Forensic context:
+    - File objects persist in pool memory even after files are closed,
+      providing evidence of files that were accessed before capture
+    - Search results for known malware filenames, suspicious paths
+      (e.g., temp directories, recycle bin), or sensitive documents
+    - Use windows_handles (Type=File) to determine which processes
+      currently hold open handles to specific files
+    - Cross-reference file paths with windows_dlllist to identify
+      DLLs loaded from unusual locations
+    """
+    return session.run_plugin("filescan")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
