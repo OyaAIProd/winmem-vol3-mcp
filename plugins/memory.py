@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import malfind, memmap, vadinfo, vadwalk
+from volatility3.plugins.windows import malfind, memmap, vadinfo, vadwalk, virtmap
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -36,9 +36,16 @@ def run_memmap(session: Session) -> dict:
     return {"plugin": "memmap", "results": parse_treegrid(treegrid)}
 
 
+def run_virtmap(session: Session) -> dict:
+    """Run windows.virtmap and return virtual mapped sections."""
+    treegrid = run_plugin(session, virtmap.VirtMap)
+    return {"plugin": "virtmap", "results": parse_treegrid(treegrid)}
+
+
 REGISTRY = {
     "malfind": run_malfind,
     "memmap": run_memmap,
     "vadinfo": run_vadinfo,
     "vadwalk": run_vadwalk,
+    "virtmap": run_virtmap,
 }

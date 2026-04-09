@@ -619,6 +619,39 @@ def windows_memmap() -> dict:
 
 
 @mcp.tool()
+def windows_virtmap() -> dict:
+    """
+    Run the virtmap plugin to list virtual mapped sections of the kernel
+    address space, showing how major kernel regions are laid out.
+
+    Use this tool when the user asks about:
+    - Kernel virtual address space layout
+    - Mapped kernel regions and their address ranges
+    - System address space organization (HAL, kernel, drivers, etc.)
+    - Kernel memory boundaries or region sizes
+    - Overview of how the OS organizes its virtual memory
+
+    Returns a dict with:
+    - "plugin": "virtmap"
+    - "results": list of dicts, each containing:
+        "Region": name or description of the mapped region (str),
+        "Start offset": start virtual address of the region (str, hex),
+        "End offset": end virtual address of the region (str, hex)
+
+    Forensic context:
+    - Kernel regions outside expected address ranges may indicate rootkit
+      modifications or kernel memory patching
+    - Compare region boundaries with known Windows kernel layout to detect
+      anomalous mappings injected by rootkits
+    - Use windows_modules and windows_driverscan to correlate driver load
+      addresses with the virtual map regions
+    - This provides a system-level overview; use windows_vadinfo for
+      per-process virtual memory details
+    """
+    return session.run_plugin("virtmap")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
