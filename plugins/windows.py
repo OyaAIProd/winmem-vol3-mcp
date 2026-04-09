@@ -12,7 +12,7 @@ from volatility3.framework import automagic, interfaces
 from volatility3.framework.interfaces.renderers import BaseAbsentValue
 from volatility3.framework.renderers import format_hints
 from volatility3.framework.interfaces.configuration import path_join
-from volatility3.plugins.windows import pslist, psscan
+from volatility3.plugins.windows import pslist, psscan, pstree
 
 BASE_CONFIG_PATH = "plugins"
 
@@ -71,7 +71,27 @@ def run_psscan(ctx: interfaces.context.ContextInterface) -> dict:
     return {"plugin": "psscan", "results": parse_treegrid(treegrid)}
 
 
+def run_pstree(ctx: interfaces.context.ContextInterface) -> dict:
+    """Run windows.pstree and return process tree with depth info."""
+    treegrid = _run_plugin(ctx, pstree.PsTree)
+    col_names = [col.name for col in treegrid.columns]
+    rows: list[dict[str, Any]] = []
+
+    def visitor(node, accumulator):
+        row = {
+            name: _serialize_value(node.values[i])
+            for i, name in enumerate(col_names)
+        }
+        row["depth"] = node.path_depth
+        accumulator.append(row)
+        return accumulator
+
+    treegrid.populate(visitor, rows)
+    return {"plugin": "pstree", "results": rows}
+
+
 PLUGIN_REGISTRY: dict[str, callable] = {
     "pslist": run_pslist,
     "psscan": run_psscan,
+    "pstree": run_pstree,
 }

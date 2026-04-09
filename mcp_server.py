@@ -30,5 +30,11 @@ def scan_processes() -> dict:
     return session.run_plugin("psscan")
 
 
+@mcp.tool()
+def get_process_tree() -> dict:
+    """Return the process tree with parent-child hierarchy and depth info."""
+    return session.run_plugin("pstree")
+
+
 if __name__ == "__main__":
     mcp.run()
