@@ -1582,6 +1582,50 @@ def windows_statistics() -> dict:
 
 
 @mcp.tool()
+def windows_crashinfo() -> dict:
+    """
+    Run the crashinfo plugin to parse and display the header information
+    from a Windows crash dump file.
+
+    Use this tool when the user asks about:
+    - Crash dump header or metadata
+    - Whether the memory image is a crash dump format
+    - System time or uptime recorded in the crash dump
+    - Number of processors or machine type from the dump header
+    - Crash dump type (full, kernel, or mini dump)
+
+    Returns a dict with:
+    - "plugin": "crashinfo"
+    - "results": list of dicts, each containing:
+        "Signature": crash dump signature string (str),
+        "MajorVersion": OS major version (int),
+        "MinorVersion": OS minor version (int),
+        "DirectoryTableBase": DTB address (str, hex),
+        "PfnDataBase": PFN database address (str, hex),
+        "PsLoadedModuleList": loaded module list address (str, hex),
+        "PsActiveProcessHead": active process list head (str, hex),
+        "MachineImageType": processor architecture identifier (int),
+        "NumberProcessors": number of processors (int),
+        "KdDebuggerDataBlock": debugger data block address (str, hex),
+        "DumpType": type of crash dump (str),
+        "SystemUpTime": system uptime at crash (str),
+        "Comment": crash dump comment if present (str),
+        "SystemTime": system time at crash (str)
+
+    Forensic context:
+    - This plugin only works with crash dump format images; raw memory
+      images will produce no results
+    - The SystemTime and SystemUpTime fields provide the exact time of
+      the crash, anchoring the forensic timeline
+    - Use windows_info for general OS information that works with all
+      image formats, not just crash dumps
+    - NumberProcessors and MachineImageType help verify the system
+      configuration matches the expected target
+    """
+    return session.run_plugin("crashinfo")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
