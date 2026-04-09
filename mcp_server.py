@@ -207,6 +207,40 @@ def windows_cmdline() -> dict:
 
 
 @mcp.tool()
+def windows_envars() -> dict:
+    """
+    Run the envars plugin to display environment variables for each process.
+
+    Use this tool when the user asks about:
+    - Environment variables set for a process
+    - PATH, TEMP, COMPUTERNAME, USERNAME, or other env vars
+    - System or user environment configuration at the time of capture
+    - Malware persistence via environment variable manipulation
+    - Process execution context or runtime environment
+
+    Returns a dict with:
+    - "plugin": "envars"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Block": environment block address (str),
+        "Variable": environment variable name (str),
+        "Value": environment variable value (str)
+
+    Forensic context:
+    - COMPUTERNAME and USERNAME reveal the machine and logged-in user at
+      capture time, useful for attribution and lateral movement analysis
+    - Unusual PATH entries or injected variables may indicate persistence
+      mechanisms (e.g., DLL search order hijacking via modified PATH)
+    - Compare environment blocks across processes: malware-spawned processes
+      may inherit distinctive variables from their parent
+    - Use windows_cmdline to correlate environment variables with the actual
+      command line used to launch each process
+    """
+    return session.run_plugin("envars")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
