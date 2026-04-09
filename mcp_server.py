@@ -19,7 +19,7 @@ session = Session(IMAGE_PATH)
 
 
 @mcp.tool()
-def get_image_info() -> dict:
+def windows_info() -> dict:
     """
     Retrieve system information from the Windows memory image, including
     OS version, architecture, and kernel details.
@@ -43,14 +43,14 @@ def get_image_info() -> dict:
       configuration and caches it, making all subsequent plugin calls faster
     - Use the OS version to determine which artifacts and behaviors are expected
       (e.g., Windows 7 vs Windows 10 have different default processes)
-    - The "Is64Bit" value determines whether WoW64 fields from get_processes
-      or scan_processes are meaningful
+    - The "Is64Bit" value determines whether WoW64 fields from windows_pslist
+      or windows_psscan are meaningful
     """
     return session.run_plugin("info")
 
 
 @mcp.tool()
-def get_processes() -> dict:
+def windows_pslist() -> dict:
     """
     Run the pslist plugin to enumerate processes from the Windows memory image
     by walking the active process linked list (EPROCESS doubly-linked list).
@@ -77,21 +77,21 @@ def get_processes() -> dict:
         "ExitTime": process exit timestamp (str or None)
 
     Forensic context:
-    - Compare with scan_processes results to detect hidden or unlinked processes;
-      a process found by scan_processes but missing from get_processes suggests
+    - Compare with windows_psscan results to detect hidden or unlinked processes;
+      a process found by windows_psscan but missing from windows_pslist suggests
       DKOM (Direct Kernel Object Manipulation) or rootkit activity
     - Use PID values from this output as context when investigating specific
       processes with future tools (e.g., cmdline, dlllist, handles)
     - Unusual parent-child relationships (e.g., svchost.exe not parented by
       services.exe, or cmd.exe spawned by a browser) may indicate process
       injection, lateral movement, or malware execution
-    - Use get_process_tree for a hierarchical view of the same data
+    - Use windows_pstree for a hierarchical view of the same data
     """
     return session.run_plugin("pslist")
 
 
 @mcp.tool()
-def scan_processes() -> dict:
+def windows_psscan() -> dict:
     """
     Run the psscan plugin to find processes by scanning for pool tags in
     physical memory, independent of the OS-maintained process list.
@@ -118,22 +118,22 @@ def scan_processes() -> dict:
         "ExitTime": process exit timestamp (str or None)
 
     Forensic context:
-    - Compare this result set against get_processes output: any process present
-      here but absent from get_processes was unlinked from the active process
+    - Compare this result set against windows_pslist output: any process present
+      here but absent from windows_pslist was unlinked from the active process
       list, which is a strong indicator of rootkit or DKOM activity
     - Terminated processes (with ExitTime set) appear here but not in
-      get_processes, which is normal — focus on processes without ExitTime
-      that are missing from get_processes
+      windows_pslist, which is normal — focus on processes without ExitTime
+      that are missing from windows_pslist
     - Pool tag scanning operates on physical memory and does not rely on OS
       data structures, making it resistant to kernel-level manipulation
-    - Use get_process_tree to visualize parent-child relationships for any
+    - Use windows_pstree to visualize parent-child relationships for any
       suspicious PIDs discovered through this scan
     """
     return session.run_plugin("psscan")
 
 
 @mcp.tool()
-def get_process_tree() -> dict:
+def windows_pstree() -> dict:
     """
     Run the pstree plugin to display processes in a parent-child hierarchy
     with depth information, showing how processes were spawned.
@@ -167,11 +167,46 @@ def get_process_tree() -> dict:
     - Suspicious patterns include: svchost.exe not under services.exe,
       cmd.exe or powershell.exe spawned by browser or Office processes,
       or deeply nested process chains used to evade detection
-    - Compare with scan_processes to check whether any parent PIDs reference
+    - Compare with windows_psscan to check whether any parent PIDs reference
       processes that have been unlinked or terminated (broken ancestry)
-    - Use get_processes for a flat list when tree structure is not needed
+    - Use windows_pslist for a flat list when tree structure is not needed
     """
     return session.run_plugin("pstree")
+
+
+@mcp.tool()
+def windows_bigpools() -> dict:
+    """
+    Run the bigpools plugin to list large pool allocations tracked by the
+    Windows kernel in the big page pool table.
+
+    Use this tool when the user asks about:
+    - Big pool allocations or large kernel memory allocations
+    - Kernel pool tag analysis or pool tag statistics
+    - Driver memory usage or kernel object allocations
+    - Suspicious large allocations that may indicate rootkit or exploit activity
+    - Non-paged pool or paged pool consumption
+
+    Returns a dict with:
+    - "plugin": "bigpools"
+    - "results": list of dicts, each containing:
+        "Allocation": base address of the allocation (str, hex),
+        "Tag": four-character pool tag identifying the allocator (str),
+        "PoolType": pool type such as NonPagedPool or PagedPool (str),
+        "NumberOfBytes": size of the allocation in bytes (str, hex),
+        "Status": whether the allocation is free or in use (str)
+
+    Forensic context:
+    - Pool tags identify which kernel component or driver made the allocation;
+      unknown or suspicious tags may indicate rootkit-allocated memory
+    - Cross-reference pool tags with known Windows driver tags to identify
+      anomalous allocations (e.g., tags not matching any legitimate driver)
+    - Large non-paged pool allocations are commonly used by rootkits to store
+      injected code or hooked function tables in kernel space
+    - Use windows_pslist and windows_psscan to correlate suspicious allocations
+      with process activity on the system
+    """
+    return session.run_plugin("bigpools")
 
 
 if __name__ == "__main__":
