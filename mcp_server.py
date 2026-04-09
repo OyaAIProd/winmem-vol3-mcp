@@ -275,6 +275,43 @@ def windows_getsids() -> dict:
 
 
 @mcp.tool()
+def windows_handles() -> dict:
+    """
+    Run the handles plugin to list open handles for each process, including
+    files, registry keys, mutexes, events, and other kernel objects.
+
+    Use this tool when the user asks about:
+    - What files, registry keys, or mutexes a process has open
+    - Open handles or kernel object references held by a process
+    - File locks, named pipes, or shared resources in use
+    - Mutex-based malware indicators (unique mutex names for C2 signaling)
+    - Resource usage or inter-process communication patterns
+
+    Returns a dict with:
+    - "plugin": "handles"
+    - "results": list of dicts, each containing:
+        "PID": process ID (int),
+        "Process": process name (str),
+        "Offset": handle table entry offset (str, hex),
+        "HandleValue": handle value (str, hex),
+        "Type": object type such as File, Key, Mutant, Event (str),
+        "GrantedAccess": access mask (str, hex),
+        "Name": object name or path (str)
+
+    Forensic context:
+    - Unique mutex (Mutant) names are classic malware indicators; many malware
+      families create a named mutex to prevent multiple instances
+    - File handles reveal which files a process is reading or writing,
+      useful for identifying data exfiltration or ransomware activity
+    - Registry key handles (Type=Key) show what configuration a process is
+      accessing, including persistence locations (Run keys, Services)
+    - Use windows_pslist to identify the process, then this tool to
+      understand what resources it is actively using
+    """
+    return session.run_plugin("handles")
+
+
+@mcp.tool()
 def windows_bigpools() -> dict:
     """
     Run the bigpools plugin to list large pool allocations tracked by the
