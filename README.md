@@ -66,19 +66,19 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-49 Volatility3 Windows plugins mapped as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the full list with detailed status.
+All 49 Windows plugins provided by Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are fully integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference.
 
-| Category | Plugins | Implemented |
-|---|---|---|
-| Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan | 11 / 11 |
-| Memory Analysis | malfind, vadinfo, vadwalk, memmap, virtmap, strings | 6 / 6 |
-| Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat | 6 / 6 |
-| Network Analysis | netscan, netstat | 2 / 2 |
-| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner | 8 / 8 |
-| File Analysis | filescan, dumpfiles, symlinkscan, mutantscan | 4 / 4 |
-| Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates | 5 / 5 |
-| System Information | info, statistics, crashinfo | 3 / 3 |
-| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids | 4 / 4 |
+| Category | Plugins |
+|---|---|
+| Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan |
+| Memory Analysis | malfind, vadinfo, vadwalk, memmap, virtmap, strings |
+| Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat |
+| Network Analysis | netscan, netstat |
+| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner |
+| File Analysis | filescan, dumpfiles, symlinkscan, mutantscan |
+| Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates |
+| System Information | info, statistics, crashinfo |
+| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids |
 
 ## Architecture
 
