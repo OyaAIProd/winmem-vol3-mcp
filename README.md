@@ -70,7 +70,7 @@ You can then ask follow-up questions to dig deeper:
 |---|---|---|
 | Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan | 11 / 11 |
 | Memory Analysis | malfind, vadinfo, vadwalk, memmap, virtmap, strings | 6 / 6 |
-| Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat | 0 / 6 |
+| Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat | 6 / 6 |
 | Network Analysis | netscan, netstat | 0 / 2 |
 | Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner | 1 / 8 |
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan | 0 / 4 |
