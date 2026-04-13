@@ -827,6 +827,106 @@ def windows_strings() -> dict:
 
 
 @mcp.tool()
+def windows_shimcachemem() -> dict:
+    """
+    Run the shimcachemem plugin to recover the Application Compatibility
+    Cache (Shimcache / AppCompatCache) from live kernel memory.
+
+    Use this tool when the user asks about:
+    - Evidence of past program execution (what EXEs ran on this system)
+    - Shimcache, AppCompatCache, or Application Compatibility entries
+    - Program execution history beyond what pslist shows (historical)
+    - Investigator questions like "did foo.exe ever run here?"
+    - Timeline reconstruction of program activity
+
+    Returns a dict with:
+    - "plugin": "shimcachemem"
+    - "results": list of dicts, each containing:
+        "Order": ordinal position in the cache, newest first (int),
+        "Last Modified": file last-modified timestamp as recorded by the
+          cache (str, UTC),
+        "Last Update": cache-entry last-update timestamp (str, UTC; may
+          be None depending on Windows build — only 32-bit Win8/8.1 record
+          this column),
+        "Exec Flag": whether Windows flagged the file as executed (bool;
+          only meaningful on 32-bit Windows 7/8/8.1 — elsewhere the cache
+          treats every entry as having been executed),
+        "File Size": size of the file as recorded (str, hex),
+        "File Path": full NT path of the executable (str)
+
+    Forensic context:
+    - Shimcache is recovered from kernel memory rather than from the
+      hive on disk, so entries remain available even if the SYSTEM hive
+      has not been flushed. It is a major evidence-of-execution source
+      alongside windows_registry_amcache and windows_registry_userassist
+    - Order=0 is the newest cache entry; walking from 0 downward reveals
+      the most recently recorded programs
+    - File Path entries that point to temp / user-writable directories
+      (AppData, ProgramData, Public, Windows\\Temp) with unusual names are
+      high-signal leads — correlate with windows_pslist (are they still
+      running?) and windows_registry_amcache (SHA1 and install time)
+    - Combine with windows_registry_userassist (interactive execution)
+      and windows_registry_scheduled_tasks (scheduled execution) to
+      distinguish the invocation vector
+    - Shimcache captures execution even if the binary was later deleted,
+      making it invaluable for post-incident triage
+    """
+    return session.run_plugin("shimcachemem")
+
+
+@mcp.tool()
+def windows_vadregexscan(pattern: str, maxsize: int = 128) -> dict:
+    """
+    Run the vadregexscan plugin to search every process's virtual memory
+    (all VADs) for a user-supplied regular expression. This is the first
+    parameterized MCP tool in the server — Claude must supply a `pattern`.
+
+    Use this tool when the user asks about:
+    - Searching process memory for a specific string, URL, IP, or regex
+    - Finding indicators of compromise (IOCs) hidden in user-mode memory
+    - Locating configuration strings, keys, or tokens embedded in a process
+    - Regex-based hunt across all running processes in one pass
+    - Questions like "is the string foo anywhere in memory?" or
+      "find any process memory containing /cmd.exe/"
+
+    Arguments:
+    - pattern (required): a regular expression (Python `re` syntax). The
+      plugin interprets it as UTF-8 bytes internally, so typical ASCII /
+      wide-char byte-level regexes work (e.g., `r"https?://[\\w.-]+"`,
+      `r"\\\\Device\\\\"`, `r"BEGIN [A-Z ]+ KEY"`).
+    - maxsize (optional, default 128): maximum number of bytes of
+      surrounding context captured per match.
+
+    Returns a dict with:
+    - "plugin": "vadregexscan"
+    - "results": list of dicts, each containing:
+        "PID": process ID where the match was found (int),
+        "Process": image name of that process (str),
+        "Offset": virtual address of the match (str, hex),
+        "Text": UTF-8 decoded match / context (str),
+        "Hex": raw bytes of the match (str repr of the bytes object)
+
+    Forensic context:
+    - A high-value general-purpose hunt tool. Unlike windows_strings (which
+      needs a pre-generated strings file), this scans live process memory
+      directly with a regex
+    - Good first probe for IOC hunts: paste in a URL, IP, domain, process
+      name, or magic byte sequence and get back every process containing
+      it, in one call
+    - Large or loose patterns on a busy image can scan tens of GB of VAD
+      space; prefer anchored or specific patterns. If the match count is
+      huge, tighten the regex first
+    - Use the PID column to pivot to windows_pslist for process context,
+      windows_cmdline for arguments, and windows_malware_malfind to see
+      whether the hit falls inside a suspicious VAD
+    - Example hunt queries: `r"\\\\\\\\"` (UNC paths), `r"curl\\.exe"`
+      (living-off-the-land), `r"-----BEGIN"` (crypto material leakage),
+      `r"powershell\\s*-e"` (encoded PowerShell).
+    """
+    return session.run_plugin("vadregexscan", pattern=pattern, maxsize=maxsize)
+
+
+@mcp.tool()
 def windows_dlllist() -> dict:
     """
     Run the dlllist plugin to list DLLs and loaded modules for each process

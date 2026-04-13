@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-57 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+59 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -39,6 +39,8 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 | `windows.memmap` | `windows_memmap` | Print the memory map |
 | `windows.virtmap` | `windows_virtmap` | List virtual mapped sections |
 | `windows.strings` | `windows_strings` | Map strings output to processes |
+| `windows.shimcachemem` | `windows_shimcachemem` | Recover Shimcache / AppCompatCache from kernel memory (evidence of execution) |
+| `windows.vadregexscan` | `windows_vadregexscan(pattern, maxsize=128)` | Scan every process VAD for a regex (parameterized) |
 
 ## Module / DLL Analysis
 
