@@ -465,6 +465,49 @@ def windows_thrdscan() -> dict:
 
 
 @mcp.tool()
+def windows_threads() -> dict:
+    """
+    Run the threads plugin to enumerate process threads by walking each
+    process's ThreadListHead linked list (the canonical active-thread view).
+
+    Use this tool when the user asks about:
+    - Which threads belong to a running process
+    - Per-process thread enumeration or thread ownership
+    - Active threads (as opposed to pool-scanned terminated threads)
+    - Thread start addresses or entry points for live processes
+    - Investigating a specific process's threads after spotting it in pslist
+
+    Returns a dict with:
+    - "plugin": "threads"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the ETHREAD structure (str, hex),
+        "PID": owning process ID (int),
+        "TID": thread ID (int),
+        "StartAddress": thread start address (str, hex),
+        "StartPath": module path containing the start address (str or None),
+        "Win32StartAddress": Win32 thread start address (str, hex),
+        "Win32StartPath": module path containing the Win32 start address
+          (str or None),
+        "CreateTime": thread creation timestamp (str),
+        "ExitTime": thread exit timestamp (str or None)
+
+    Forensic context:
+    - Unlike windows_thrdscan (pool-tag scan that can surface terminated or
+      unlinked threads), this plugin walks active thread lists, so results
+      only reflect currently linked threads — compare the two to spot
+      hidden/unlinked threads (presence in thrdscan but not threads)
+    - Win32StartAddress pointing outside any legitimate module
+      (Win32StartPath is None) is a classic indicator of remote thread
+      injection (CreateRemoteThread / NtCreateThreadEx payloads)
+    - Use the PID column to resolve to a process name via windows_pslist and
+      its command line via windows_cmdline for fuller context
+    - Cross-reference with windows_malfind to correlate suspicious threads
+      with injected memory regions in the same PID
+    """
+    return session.run_plugin("threads")
+
+
+@mcp.tool()
 def windows_malfind() -> dict:
     """
     Run the malfind plugin to detect process memory regions that potentially

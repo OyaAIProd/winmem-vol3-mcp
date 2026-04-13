@@ -1,7 +1,7 @@
 # Volatility3 Windows Plugin Catalog
 
-All 49 plugins from `volatility3.plugins.windows.*` (v2.27.0) are fully
-integrated as MCP tools.
+50 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
 
@@ -26,6 +26,7 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.handles` | `windows_handles` | List process open handles |
 | `windows.joblinks` | `windows_joblinks` | Print process job link information |
 | `windows.thrdscan` | `windows_thrdscan` | Scan for Windows threads |
+| `windows.threads` | `windows_threads` | List per-process threads via thread list walk |
 
 ## Memory Analysis
 

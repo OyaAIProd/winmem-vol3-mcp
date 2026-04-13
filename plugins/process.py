@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, privileges, pslist, psscan, pstree, sessions, thrdscan
+from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, privileges, pslist, psscan, pstree, sessions, thrdscan, threads
 
 from plugins._common import _serialize_value, parse_treegrid, run_plugin
 
@@ -85,6 +85,12 @@ def run_thrdscan(session: Session) -> dict:
     return {"plugin": "thrdscan", "results": parse_treegrid(treegrid)}
 
 
+def run_threads(session: Session) -> dict:
+    """Run windows.threads and return threads walked from process thread lists."""
+    treegrid = run_plugin(session, threads.Threads)
+    return {"plugin": "threads", "results": parse_treegrid(treegrid)}
+
+
 def run_sessions(session: Session) -> dict:
     """Run windows.sessions and return processes with session information."""
     treegrid = run_plugin(session, sessions.Sessions)
@@ -100,6 +106,7 @@ PLUGIN_MAP = {
     "privileges": run_privileges,
     "sessions": run_sessions,
     "thrdscan": run_thrdscan,
+    "threads": run_threads,
     "pslist": run_pslist,
     "psscan": run_psscan,
     "pstree": run_pstree,
