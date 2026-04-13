@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import memmap, strings, vadinfo, vadwalk, virtmap
+from volatility3.plugins.windows import memmap, shimcachemem, strings, vadinfo, vadwalk, virtmap
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -42,8 +42,15 @@ def run_strings(session: Session) -> dict:
     return {"plugin": "strings", "results": parse_treegrid(treegrid)}
 
 
+def run_shimcachemem(session: Session) -> dict:
+    """Run windows.shimcachemem and return Application Compatibility Cache entries."""
+    treegrid = run_plugin(session, shimcachemem.ShimcacheMem)
+    return {"plugin": "shimcachemem", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "memmap": run_memmap,
+    "shimcachemem": run_shimcachemem,
     "strings": run_strings,
     "vadinfo": run_vadinfo,
     "vadwalk": run_vadwalk,

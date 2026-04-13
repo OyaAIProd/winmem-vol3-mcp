@@ -827,6 +827,54 @@ def windows_strings() -> dict:
 
 
 @mcp.tool()
+def windows_shimcachemem() -> dict:
+    """
+    Run the shimcachemem plugin to recover the Application Compatibility
+    Cache (Shimcache / AppCompatCache) from live kernel memory.
+
+    Use this tool when the user asks about:
+    - Evidence of past program execution (what EXEs ran on this system)
+    - Shimcache, AppCompatCache, or Application Compatibility entries
+    - Program execution history beyond what pslist shows (historical)
+    - Investigator questions like "did foo.exe ever run here?"
+    - Timeline reconstruction of program activity
+
+    Returns a dict with:
+    - "plugin": "shimcachemem"
+    - "results": list of dicts, each containing:
+        "Order": ordinal position in the cache, newest first (int),
+        "Last Modified": file last-modified timestamp as recorded by the
+          cache (str, UTC),
+        "Last Update": cache-entry last-update timestamp (str, UTC; may
+          be None depending on Windows build — only 32-bit Win8/8.1 record
+          this column),
+        "Exec Flag": whether Windows flagged the file as executed (bool;
+          only meaningful on 32-bit Windows 7/8/8.1 — elsewhere the cache
+          treats every entry as having been executed),
+        "File Size": size of the file as recorded (str, hex),
+        "File Path": full NT path of the executable (str)
+
+    Forensic context:
+    - Shimcache is recovered from kernel memory rather than from the
+      hive on disk, so entries remain available even if the SYSTEM hive
+      has not been flushed. It is a major evidence-of-execution source
+      alongside windows_registry_amcache and windows_registry_userassist
+    - Order=0 is the newest cache entry; walking from 0 downward reveals
+      the most recently recorded programs
+    - File Path entries that point to temp / user-writable directories
+      (AppData, ProgramData, Public, Windows\\Temp) with unusual names are
+      high-signal leads — correlate with windows_pslist (are they still
+      running?) and windows_registry_amcache (SHA1 and install time)
+    - Combine with windows_registry_userassist (interactive execution)
+      and windows_registry_scheduled_tasks (scheduled execution) to
+      distinguish the invocation vector
+    - Shimcache captures execution even if the binary was later deleted,
+      making it invaluable for post-incident triage
+    """
+    return session.run_plugin("shimcachemem")
+
+
+@mcp.tool()
 def windows_dlllist() -> dict:
     """
     Run the dlllist plugin to list DLLs and loaded modules for each process
