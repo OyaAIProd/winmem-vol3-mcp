@@ -2865,6 +2865,40 @@ def windows_malware_unhooked_system_calls() -> dict:
 
 
 @mcp.tool()
+def windows_malware_svcdiff() -> dict:
+    """
+    Run the malware.svcdiff plugin to diff windows_svclist (linked-list
+    walk) against windows_svcscan (signature scan) and report only the
+    services present in one view but missing from the other — a classic
+    DKOM / service-hiding rootkit indicator.
+
+    Use this tool when the user asks about:
+    - Hidden Windows services
+    - DKOM tampering of the SCM service record list
+    - Discrepancy between linked-list and pool-scan service views
+    - Quick triage for suspected service-hiding rootkits
+
+    Returns a dict with:
+    - "plugin": "malware.svcdiff"
+    - "results": list of dicts using the same schema as windows_svcscan
+      (Offset, Order, PID, Start, State, Type, Name, Display, Binary,
+      Binary (Registry), Dll), but limited to entries that disagree
+      between the two enumeration methods.
+
+    Forensic context:
+    - Note: requires Windows 10 build 15063+ on a 64-bit image (same
+      restriction as windows_svclist). On older / 32-bit images the
+      plugin returns an empty result and logs a warning
+    - Any non-empty row is high-signal: the service exists in memory
+      but has been unlinked from SCM's list. Investigate the Binary
+      and Dll columns immediately
+    - Save the manual diff cycle: skips the need to run windows_svclist
+      and windows_svcscan separately and compare Names by hand
+    """
+    return session.run_plugin("malware.svcdiff")
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
