@@ -6,16 +6,11 @@ An MCP (Model Context Protocol) server that wraps the [Volatility3](https://gith
 
 ## Key Features
 
-- **Direct Python API integration** -- calls `volatility3` as a library (`import volatility3`), not via subprocess
-- **Structured output** -- TreeGrid results are parsed into typed JSON-serializable dicts, not raw text
-- **Session-based context** -- a single Volatility3 Context is built once at startup and reused across all plugin calls
-- **Parameterized query support** -- plugins that require a user argument (e.g., `windows_vadregexscan(pattern)`) are exposed as MCP tools with typed parameters, letting Claude drive regex hunts and other targeted queries end-to-end without leaving the conversation
-- **Binary extraction to disk** -- dump plugins (`windows_dumpfiles`, `windows_pedump`, ...) write recovered files / PE images to the directory set by the `VOL_DUMP_DIR` environment variable, while the MCP response returns only the on-disk path and metadata. This keeps dumped binaries out of Claude's context window (which binary blobs would otherwise overwhelm) yet makes them immediately available to the analyst for IDA, YARA, or sandbox workflows
-- **Result caching** -- plugin results are cached per session; parameterized tools are keyed by their argument set, so repeating the same query is free while changing an argument triggers a fresh run
-- **Config caching** -- kernel/layer configuration is saved to `{image}.vol3cfg.json` on first run, skipping expensive PDB download and layer scanning on subsequent starts
-- **Forensic-aware tool docstrings** -- each MCP tool carries a three-layer docstring (trigger patterns, return structure, forensic context) that guides the LLM to select the right tool, interpret results accurately, and autonomously chain multi-step analysis workflows
-- **Windows-version-aware plugin execution** -- each plugin's behaviour against Windows 7 / 8 / 10 / 11 (and across specific Win10 builds) is audited and documented in [`TOOL_CATALOG.md`](TOOL_CATALOG.md): hard restrictions (e.g., `windows_svclist` requires Win10 build 15063+ x64), implicit OS dependencies (e.g., `windows_registry_amcache` only populates from Win8+), and version-aware adapters whose output schema varies by build are all explicitly catalogued. This lets Claude correctly interpret empty results as "OS-incompatible, not a forensic miss" and prevents users from misdiagnosing a clean sample as faulty tooling
-- **Multilingual natural language queries** -- while the codebase and tool outputs are in English, users can ask questions in any language Claude supports (e.g., Korean, Japanese, Chinese, German, etc.) and receive analysis results in the same language
+- **Direct Volatility3 integration** -- imports `volatility3` as a library (no subprocess) and parses every TreeGrid into typed, JSON-serializable dicts that Claude can reason over directly.
+- **Stateful session with multi-layer caching** -- a single Volatility3 Context is built once at startup and reused across all calls. Plugin results are cached per session (keyed by arguments for parameterized tools), and kernel/layer config persists to `{image}.vol3cfg.json` so subsequent starts skip PDB downloads and layer scanning.
+- **Rich query surface** -- parameterized tools accept typed arguments (e.g., `windows_vadregexscan(pattern)`); dump tools (`windows_dumpfiles`, `windows_pedump`, ...) write recovered binaries to the directory set by `VOL_DUMP_DIR` and return only the on-disk path, keeping bytes out of Claude's context while leaving them immediately available for IDA / YARA / sandbox follow-up.
+- **LLM-friendly tool metadata** -- every tool carries a three-layer docstring (trigger patterns / return schema / forensic context). Windows-version compatibility (hard restrictions, implicit OS dependencies, version-aware adapters) is catalogued in [`TOOL_CATALOG.md`](TOOL_CATALOG.md) so Claude picks the right tool, interprets results accurately, and recognises empty output as "OS-incompatible" rather than a tooling failure.
+- **Multilingual natural-language queries** -- codebase and tool outputs are in English, but users can ask in any language Claude supports (Korean, Japanese, Chinese, German, ...) and receive analysis in the same language.
 
 ## Installation
 
