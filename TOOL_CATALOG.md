@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-50 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+51 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -69,6 +69,7 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.devicetree` | `windows_devicetree` | List device tree by drivers |
 | `windows.ssdt` | `windows_ssdt` | List system call table |
 | `windows.poolscanner` | `windows_poolscanner` | Generic pool scanner |
+| `windows.orphan_kernel_threads` | `windows_orphan_kernel_threads` | Detect kernel threads not mapped to any module (rootkit indicator) |
 
 ## File Analysis
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, privileges, pslist, psscan, pstree, sessions, thrdscan, threads
+from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, orphan_kernel_threads, privileges, pslist, psscan, pstree, sessions, thrdscan, threads
 
 from plugins._common import _serialize_value, parse_treegrid, run_plugin
 
@@ -91,6 +91,12 @@ def run_threads(session: Session) -> dict:
     return {"plugin": "threads", "results": parse_treegrid(treegrid)}
 
 
+def run_orphan_kernel_threads(session: Session) -> dict:
+    """Run windows.orphan_kernel_threads and return kernel threads not mapped to any module."""
+    treegrid = run_plugin(session, orphan_kernel_threads.Threads)
+    return {"plugin": "orphan_kernel_threads", "results": parse_treegrid(treegrid)}
+
+
 def run_sessions(session: Session) -> dict:
     """Run windows.sessions and return processes with session information."""
     treegrid = run_plugin(session, sessions.Sessions)
@@ -107,6 +113,7 @@ PLUGIN_MAP = {
     "sessions": run_sessions,
     "thrdscan": run_thrdscan,
     "threads": run_threads,
+    "orphan_kernel_threads": run_orphan_kernel_threads,
     "pslist": run_pslist,
     "psscan": run_psscan,
     "pstree": run_pstree,

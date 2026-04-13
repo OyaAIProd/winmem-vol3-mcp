@@ -508,6 +508,53 @@ def windows_threads() -> dict:
 
 
 @mcp.tool()
+def windows_orphan_kernel_threads() -> dict:
+    """
+    Run the orphan_kernel_threads plugin to detect kernel threads whose
+    start address does not map to any loaded kernel module.
+
+    Use this tool when the user asks about:
+    - Rootkits, kernel-mode malware, or kernel implants
+    - Kernel threads with no owning driver or module
+    - Hidden kernel execution or unlinked kernel code
+    - Suspicious activity inside the System process (PID 4)
+    - Threads running from non-module kernel memory
+
+    Returns a dict with:
+    - "plugin": "orphan_kernel_threads"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the ETHREAD structure (str, hex),
+        "PID": owning process ID, typically 4 (System) or a child kernel
+          process such as MemCompression / Registry (int),
+        "TID": thread ID (int),
+        "StartAddress": kernel thread start address that does not resolve
+          to any module (str, hex),
+        "StartPath": module path — always None for orphans by definition,
+        "Win32StartAddress": Win32 start address (str, hex),
+        "Win32StartPath": Win32 module path (str or None),
+        "CreateTime": thread creation timestamp (str),
+        "ExitTime": thread exit timestamp (str or None)
+
+    Forensic context:
+    - Any non-empty result is high-signal: a kernel thread executing outside
+      every loaded module is a strong rootkit indicator (e.g., manually
+      mapped driver, DKOM-hidden module, shellcode injected into kernel
+      memory pools)
+    - The plugin filters aggressively (skips terminated/smeared threads and
+      userland pointers) so findings are unlikely to be noise — investigate
+      each result
+    - Resolve the StartAddress against windows_modules and windows_modscan:
+      presence in modscan but absence in modules suggests an unlinked module
+      that owns the orphan thread
+    - Correlate with windows_ssdt and windows_callbacks to find additional
+      rootkit hooks tied to the same suspect memory region
+    - Use windows_poolscanner to look for orphan kernel objects near the
+      thread's start address
+    """
+    return session.run_plugin("orphan_kernel_threads")
+
+
+@mcp.tool()
 def windows_malfind() -> dict:
     """
     Run the malfind plugin to detect process memory regions that potentially
