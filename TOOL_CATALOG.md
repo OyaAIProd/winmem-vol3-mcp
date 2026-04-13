@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-59 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+60 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -51,6 +51,7 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 | `windows.modscan` | `windows_modscan` | Scan for kernel modules by pool tag |
 | `windows.verinfo` | `windows_verinfo` | List version information from PE files |
 | `windows.iat` | `windows_iat` | Extract Import Address Table |
+| `windows.pedump` | `windows_pedump(base, pid=0, kernel_module=False)` | Reconstruct a PE at base to VOL_DUMP_DIR (parameterized) |
 
 ## Network Analysis
 

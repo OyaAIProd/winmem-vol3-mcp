@@ -1154,6 +1154,63 @@ def windows_iat() -> dict:
 
 
 @mcp.tool()
+def windows_pedump(base: int, pid: int = 0, kernel_module: bool = False) -> dict:
+    """
+    Run the pedump plugin to reconstruct a PE image from memory at a
+    specified base address and write the resulting .exe / .dll / .sys
+    bytes into the directory configured via ``VOL_DUMP_DIR``.
+
+    Use this tool when the user asks about:
+    - Extracting a specific executable or DLL from a live process
+    - Dumping a suspicious module / driver as a .exe / .dll / .sys file
+    - Reconstructing an injected PE for static analysis in IDA, Ghidra,
+      or other PE tooling
+    - Recovering a hollowed / masqueraded image that no longer exists on
+      disk
+    - Pulling a kernel driver by base address (pass kernel_module=True)
+
+    Arguments:
+    - base (required): virtual base address of the target PE (int). For
+      userland modules, the base appears in windows_dlllist as
+      "Base"; for kernel drivers, it appears in windows_modules.
+    - pid (optional, default 0): if non-zero, restrict search to this
+      process. Ignored when kernel_module=True.
+    - kernel_module (optional, default False): set True to dump a kernel
+      mode PE (driver) instead of a userland image.
+
+    Returns a dict with:
+    - "plugin": "pedump"
+    - "results": list of dicts, each containing:
+        "PID": owning process ID (or 4 / System for kernel modules) (int),
+        "Process": image name of the owning process (str),
+        "File output": final on-disk path of the reconstructed PE or an
+          error string if reconstruction failed
+
+    Forensic context:
+    - Requires VOL_DUMP_DIR to be configured; otherwise raises a clear
+      error so Claude can prompt the user to set it
+    - Typical workflow:
+        1. windows_malware_malfind surfaces a suspicious VAD at base B
+           inside PID P
+        2. windows_pedump(base=B, pid=P) recovers the hollowed / injected
+           PE to disk
+        3. User runs IDA / Ghidra / YARA on the dumped bytes
+    - For hidden rootkit drivers: compare windows_modscan (pool scan)
+      against windows_modules (linked list) to find unlinked driver
+      bases, then pedump each unlinked base with kernel_module=True
+    - Dumped PEs are reconstructed from live memory pages, so section
+      alignment and unmapped pages may leave zero-filled regions — this
+      is expected and still useful for static analysis
+    """
+    return session.run_plugin(
+        "pedump",
+        base=base,
+        pid=pid,
+        kernel_module=kernel_module,
+    )
+
+
+@mcp.tool()
 def windows_callbacks() -> dict:
     """
     Run the callbacks plugin to list kernel callbacks and notification
