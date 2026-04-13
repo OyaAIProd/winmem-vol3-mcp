@@ -71,15 +71,16 @@ You can then ask follow-up questions to dig deeper:
 | Category | Plugins |
 |---|---|
 | Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan, threads |
-| Memory Analysis | malfind, vadinfo, vadwalk, memmap, virtmap, strings |
-| Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat |
+| Memory Analysis | vadinfo, vadwalk, memmap, virtmap, strings |
+| Module / DLL Analysis | dlllist, modules, modscan, verinfo, iat |
 | Network Analysis | netscan, netstat |
-| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner, orphan_kernel_threads |
+| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, devicetree, ssdt, poolscanner, orphan_kernel_threads |
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan |
 | Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates, registry.scheduled_tasks, registry.getcellroutine, registry.amcache |
 | Service Analysis | svcscan, svclist |
 | System Information | info, statistics, crashinfo |
-| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids, suspended_threads |
+| Security / Integrity | mbrscan, truecrypt, getservicesids, suspended_threads |
+| Malware Detection | malware.drivermodule, malware.ldrmodules, malware.malfind, malware.skeleton_key_check |
 
 ## Architecture
 

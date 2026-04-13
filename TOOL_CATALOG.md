@@ -7,7 +7,9 @@ as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 MCP tool names mirror the Volatility3 plugin name for easy identification.
 Format: `windows_{plugin_name}` (e.g., `windows.pslist` -> `windows_pslist`).
-Registry sub-plugins use `windows_registry_{name}`.
+Sub-namespace plugins follow `windows_{namespace}_{name}`:
+- `windows.registry.*` -> `windows_registry_{name}`
+- `windows.malware.*` -> `windows_malware_{name}`
 
 ---
 
@@ -32,7 +34,6 @@ Registry sub-plugins use `windows_registry_{name}`.
 
 | Volatility3 Plugin | MCP Tool Name | Description |
 |---|---|---|
-| `windows.malfind` | `windows_malfind` | Detect potentially injected code in process memory |
 | `windows.vadinfo` | `windows_vadinfo` | List process memory ranges (VAD) |
 | `windows.vadwalk` | `windows_vadwalk` | Walk the VAD tree |
 | `windows.memmap` | `windows_memmap` | Print the memory map |
@@ -44,7 +45,6 @@ Registry sub-plugins use `windows_registry_{name}`.
 | Volatility3 Plugin | MCP Tool Name | Description |
 |---|---|---|
 | `windows.dlllist` | `windows_dlllist` | List loaded modules per process |
-| `windows.ldrmodules` | `windows_ldrmodules` | List loaded modules (detects unlinked DLLs) |
 | `windows.modules` | `windows_modules` | List loaded kernel modules |
 | `windows.modscan` | `windows_modscan` | Scan for kernel modules by pool tag |
 | `windows.verinfo` | `windows_verinfo` | List version information from PE files |
@@ -65,7 +65,6 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.callbacks` | `windows_callbacks` | List kernel callbacks and notification routines |
 | `windows.driverscan` | `windows_driverscan` | Scan for driver objects |
 | `windows.driverirp` | `windows_driverirp` | List IRPs for drivers |
-| `windows.drivermodule` | `windows_drivermodule` | Detect hidden driver modules |
 | `windows.devicetree` | `windows_devicetree` | List device tree by drivers |
 | `windows.ssdt` | `windows_ssdt` | List system call table |
 | `windows.poolscanner` | `windows_poolscanner` | Generic pool scanner |
@@ -108,12 +107,25 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.statistics` | `windows_statistics` | Memory space statistics |
 | `windows.crashinfo` | `windows_crashinfo` | Windows crash dump information |
 
-## Security / Malware
+## Security / Integrity
 
 | Volatility3 Plugin | MCP Tool Name | Description |
 |---|---|---|
-| `windows.skeleton_key_check` | `windows_skeleton_key_check` | Detect Skeleton Key malware |
 | `windows.mbrscan` | `windows_mbrscan` | Scan for Master Boot Records |
 | `windows.truecrypt` | `windows_truecrypt` | Find TrueCrypt cached passphrases |
 | `windows.getservicesids` | `windows_getservicesids` | List process token service SIDs |
 | `windows.suspended_threads` | `windows_suspended_threads` | Detect never-resumed suspended threads (hollowing / EDR evasion) |
+
+## Malware Detection
+
+Canonical `windows.malware.*` plugins for advanced rootkit / injection /
+evasion detection. The legacy `windows.*` aliases (drivermodule, ldrmodules,
+malfind, skeleton_key_check) are deprecated `PluginRenameClass` wrappers
+for these and will be removed by the Volatility Foundation on 2026-06-07.
+
+| Volatility3 Plugin | MCP Tool Name | Description |
+|---|---|---|
+| `windows.malware.drivermodule` | `windows_malware_drivermodule` | Detect hidden driver modules |
+| `windows.malware.ldrmodules` | `windows_malware_ldrmodules` | List loaded modules (detects unlinked DLLs) |
+| `windows.malware.malfind` | `windows_malware_malfind` | Detect potentially injected code in process memory |
+| `windows.malware.skeleton_key_check` | `windows_malware_skeleton_key_check` | Detect Skeleton Key malware |
