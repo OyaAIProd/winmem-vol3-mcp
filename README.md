@@ -10,6 +10,7 @@ An MCP (Model Context Protocol) server that wraps the [Volatility3](https://gith
 - **Structured output** -- TreeGrid results are parsed into typed JSON-serializable dicts, not raw text
 - **Session-based context** -- a single Volatility3 Context is built once at startup and reused across all plugin calls
 - **Parameterized query support** -- plugins that require a user argument (e.g., `windows_vadregexscan(pattern)`) are exposed as MCP tools with typed parameters, letting Claude drive regex hunts and other targeted queries end-to-end without leaving the conversation
+- **Binary extraction to disk** -- dump plugins (`windows_dumpfiles`, `windows_pedump`, ...) write recovered files / PE images to the directory set by the `VOL_DUMP_DIR` environment variable, while the MCP response returns only the on-disk path and metadata. This keeps dumped binaries out of Claude's context window (which binary blobs would otherwise overwhelm) yet makes them immediately available to the analyst for IDA, YARA, or sandbox workflows
 - **Result caching** -- plugin results are cached per session; parameterized tools are keyed by their argument set, so repeating the same query is free while changing an argument triggers a fresh run
 - **Config caching** -- kernel/layer configuration is saved to `{image}.vol3cfg.json` on first run, skipping expensive PDB download and layer scanning on subsequent starts
 - **Forensic-aware tool docstrings** -- each MCP tool carries a three-layer docstring (trigger patterns, return structure, forensic context) that guides the LLM to select the right tool, interpret results accurately, and autonomously chain multi-step analysis workflows
@@ -70,13 +71,13 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-59 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
+61 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
 
 | Category | Plugins |
 |---|---|
 | Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan, threads |
 | Memory Analysis | vadinfo, vadwalk, memmap, virtmap, strings, shimcachemem, vadregexscan |
-| Module / DLL Analysis | dlllist, modules, modscan, verinfo, iat |
+| Module / DLL Analysis | dlllist, modules, modscan, verinfo, iat, pe_symbols, pedump |
 | Network Analysis | netscan, netstat |
 | Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, devicetree, ssdt, poolscanner, orphan_kernel_threads |
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan |
