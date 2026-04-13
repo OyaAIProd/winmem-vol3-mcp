@@ -5,6 +5,7 @@ functions. This package aggregates them into a single PLUGIN_MAP.
 """
 
 from plugins._common import BASE_CONFIG_PATH
+from plugins.desktop import PLUGIN_MAP as _desktop
 from plugins.file import PLUGIN_MAP as _file
 from plugins.kernel import PLUGIN_MAP as _kernel
 from plugins.malware import PLUGIN_MAP as _malware
@@ -18,6 +19,7 @@ from plugins.service import PLUGIN_MAP as _service
 from plugins.sysinfo import PLUGIN_MAP as _sysinfo
 
 PLUGIN_MAP: dict[str, callable] = {
+    **_desktop,
     **_file,
     **_kernel,
     **_malware,

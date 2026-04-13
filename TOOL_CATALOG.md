@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-66 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+69 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -107,6 +107,14 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 |---|---|---|
 | `windows.svcscan` | `windows_svcscan` | Enumerate Windows services by scanning services.exe |
 | `windows.svclist` | `windows_svclist` | List services via services.exe linked list (Win10 15063+ x64 only) |
+
+## Desktop / GUI
+
+| Volatility3 Plugin | MCP Tool Name | Description |
+|---|---|---|
+| `windows.windowstations` | `windows_windowstations` | Enumerate tagWINDOWSTATION objects per session |
+| `windows.desktops` | `windows_desktops` | Walk per-WindowStation desktop list with attached threads |
+| `windows.deskscan` | `windows_deskscan` | Pool-tag scan for tagDESKTOP objects (finds hidden/unlinked) |
 
 ## System Information
 

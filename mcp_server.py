@@ -2663,5 +2663,119 @@ def windows_svclist() -> dict:
     return session.run_plugin("svclist")
 
 
+@mcp.tool()
+def windows_windowstations() -> dict:
+    """
+    Run the windowstations plugin to enumerate every Windows ``tagWINDOWSTATION``
+    object — the top-level container that scopes interactive desktops,
+    clipboard, and atom tables for a logon session.
+
+    Use this tool when the user asks about:
+    - Window stations or interactive sessions on the system
+    - Service-vs-interactive isolation (Service-0x0-3e7$ etc.)
+    - The set of session IDs at the GUI subsystem level
+    - First step before enumerating windows_desktops or windows_deskscan
+    - Investigating clipboard / atom-based malware persistence
+
+    Returns a dict with:
+    - "plugin": "windowstations"
+    - "results": list of dicts, each containing:
+        "Offset": virtual address of the _tagWINDOWSTATION object (str, hex),
+        "Name": window station name (e.g., ``WinSta0`` for the interactive
+          station; ``Service-0x0-3e7$`` for the SYSTEM session) (str),
+        "SessionId": session ID owning this window station (int)
+
+    Forensic context:
+    - WinSta0 in SessionId > 0 indicates an active interactive logon —
+      compare with windows_sessions to attribute it to a user
+    - Anomalous or duplicate window station names can indicate
+      isolation-bypass tools that create their own GUI sandboxes
+    - Use the offsets from this output as input scope for
+      windows_desktops (per-station desktop walk) and windows_deskscan
+      (pool-tag scan that may surface hidden desktops)
+    """
+    return session.run_plugin("windowstations")
+
+
+@mcp.tool()
+def windows_desktops() -> dict:
+    """
+    Run the desktops plugin to enumerate every ``tagDESKTOP`` object by
+    walking the Desktop linked list of each Window Station, and the
+    process threads attached to each desktop.
+
+    Use this tool when the user asks about:
+    - Desktops attached to a Window Station / interactive session
+    - Which processes hold a thread on the interactive desktop (Default,
+      Winlogon, Disconnect)
+    - Mapping a process to its GUI desktop context
+    - GUI subsystem state for the logged-on user
+    - Detection of unusual / hidden desktops registered by malware
+
+    Returns a dict with:
+    - "plugin": "desktops"
+    - "results": list of dicts (one row per (desktop, attached process)
+      pair), each containing:
+        "Offset": virtual address of the _tagDESKTOP object (str, hex),
+        "Window Station": parent WindowStation name (e.g. ``WinSta0``,
+          ``Service-0x0-3e7$``) (str),
+        "Session": session ID hosting the desktop (int),
+        "Desktop": desktop name (e.g. ``Default``, ``Winlogon``,
+          ``Disconnect``) (str),
+        "Process": image name of a process attached to this desktop (str),
+        "PID": that process's ID (int)
+
+    Forensic context:
+    - Desktops named other than ``Default`` / ``Winlogon`` / ``Disconnect``
+      can indicate sandbox-evasion or stealth GUI execution; cross
+      reference with windows_pslist to see whether the owning process is
+      legitimate
+    - Compare with windows_deskscan results: rows in deskscan that don't
+      appear here suggest unlinked / hidden desktops (object exists but
+      isn't on the parent station's list)
+    - Use Session column to confirm whether activity is in an interactive
+      logon session vs SYSTEM service space
+    """
+    return session.run_plugin("desktops")
+
+
+@mcp.tool()
+def windows_deskscan() -> dict:
+    """
+    Run the deskscan plugin to discover ``tagDESKTOP`` objects via pool
+    tag scanning instead of walking the WindowStation desktop list. This
+    surfaces hidden / unlinked desktops that windows_desktops would miss.
+
+    Use this tool when the user asks about:
+    - Hidden or unlinked desktops not reachable from a WindowStation list
+    - Detection of desktop hijacking / sandbox-evasion artifacts
+    - A scan-based view to compare against the linked-list windows_desktops
+    - Recovering desktop objects from images where standard enumeration
+      yields nothing
+
+    Returns a dict with:
+    - "plugin": "deskscan"
+    - "results": list of dicts with the same schema as windows_desktops:
+        "Offset": virtual address of the _tagDESKTOP object (str, hex),
+        "Window Station": parent WindowStation name (str),
+        "Session": session ID (int),
+        "Desktop": desktop name (str),
+        "Process": process attached to the desktop (str),
+        "PID": process ID (int)
+
+    Forensic context:
+    - The classic list-vs-scan pattern (cf. windows_pslist vs
+      windows_psscan): rows present here but absent from
+      windows_desktops are hidden / DKOM-removed desktops
+    - Use as a fallback when windows_desktops returns empty due to GUI
+      symbol limitations on older Windows images — the scan path may
+      still surface objects via pool tags
+    - Suspicious desktop names (anything other than ``Default`` /
+      ``Winlogon`` / ``Disconnect``) deserve cross-reference with
+      windows_pslist for the attached process
+    """
+    return session.run_plugin("deskscan")
+
+
 if __name__ == "__main__":
     mcp.run()
