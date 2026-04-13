@@ -2899,6 +2899,48 @@ def windows_malware_svcdiff() -> dict:
 
 
 @mcp.tool()
+def windows_malware_processghosting() -> dict:
+    """
+    Run the malware.processghosting plugin to detect processes created
+    via the Process Ghosting technique — where the source executable
+    is marked for deletion (or its FILE_OBJECT zeroed / mapped with
+    DeleteOnClose VAD) before the process image section is created,
+    so on-disk forensics finds nothing while the process runs.
+
+    Use this tool when the user asks about:
+    - Process Ghosting detection (MITRE ATT&CK T1620)
+    - Processes whose backing executable no longer exists on disk
+    - Anti-forensics techniques that delete the EXE before execution
+    - Suspicious processes whose Path is unrecoverable
+
+    Returns a dict with:
+    - "plugin": "malware.processghosting"
+    - "results": list of dicts (one row per ghosted process):
+        "PID": process ID (int),
+        "Process": process image name (str),
+        "Base": base address of the process image (str, hex),
+        "FILE_OBJECT": _FILE_OBJECT pointer for the EXE; 0 indicates a
+          ghosting indicator (str, hex),
+        "DeletePending": 1 if the file's DeletePending flag is set
+          (a textbook ghosting signature) (int),
+        "DeleteOnClose": 1 if the section was opened with
+          FILE_DELETE_ON_CLOSE (an alternative ghosting signature) (int),
+        "Path": last known on-disk path of the EXE (str)
+
+    Forensic context:
+    - Process Ghosting first publicized by Elastic in 2021. Any
+      non-empty result is high-signal: legitimate processes do not
+      run from images marked DeletePending or DeleteOnClose
+    - Pair with windows_pslist (process is alive) and
+      windows_malware_pebmasquerade (the PEB may also be spoofed to
+      hide the original ghost name)
+    - Use windows_pedump(base=Base, pid=PID) to recover the in-memory
+      executable, since the on-disk version is gone
+    """
+    return session.run_plugin("malware.processghosting")
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
