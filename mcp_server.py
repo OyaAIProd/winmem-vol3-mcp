@@ -2778,6 +2778,48 @@ def windows_deskscan() -> dict:
 
 
 @mcp.tool()
+def windows_windows() -> dict:
+    """
+    Run the windows plugin to enumerate every visible / hidden GUI
+    window object across every Desktop / WindowStation, mapping each
+    window back to its owning process and its WindowProc handler.
+
+    Use this tool when the user asks about:
+    - GUI windows currently registered on the system
+    - Window titles / classes for a given process
+    - WindowProc hijacking (a foreign Procedure address inside a
+      legitimate window's handler slot)
+    - Sandbox-evasion techniques that hide windows from the taskbar
+    - Mapping a visible UI back to its hosting process
+
+    Returns a dict with:
+    - "plugin": "windows"
+    - "results": list of dicts, each containing:
+        "Offset": virtual address of the _tagWND object (str, hex),
+        "Station": parent WindowStation name (str),
+        "Session": session ID (int),
+        "Desktop": parent Desktop name (str),
+        "Window": window class / title (str),
+        "Procedure": address of the WindowProc that handles messages
+          (str, hex),
+        "Process": owning process image name (str),
+        "PID": owning process ID (int)
+
+    Forensic context:
+    - WindowProc hijacking: a Procedure address pointing outside the
+      owning module's range is a classic UI-subsystem injection
+      indicator. Use windows_pe_symbols to attribute the address to
+      its real module
+    - Cross-reference with windows_desktops / windows_deskscan to
+      confirm the parent Desktop is legitimate
+    - Hidden / off-screen windows can host clipboard hijackers,
+      keyloggers, or banking-trojan overlays — pair with
+      windows_malware_malfind on the owning PID for context
+    """
+    return session.run_plugin("windows")
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
