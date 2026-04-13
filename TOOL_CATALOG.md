@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-72 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+79 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -154,3 +154,10 @@ for these and will be removed by the Volatility Foundation on 2026-06-07.
 | `windows.malware.ldrmodules` | `windows_malware_ldrmodules` | List loaded modules (detects unlinked DLLs) |
 | `windows.malware.malfind` | `windows_malware_malfind` | Detect potentially injected code in process memory |
 | `windows.malware.skeleton_key_check` | `windows_malware_skeleton_key_check` | Detect Skeleton Key malware |
+| `windows.malware.unhooked_system_calls` | `windows_malware_unhooked_system_calls` | Detect ntdll syscall stub divergence (EDR/unhooking malware) |
+| `windows.malware.svcdiff` | `windows_malware_svcdiff` | Diff svclist vs svcscan to surface hidden services (Win10 15063+ x64) |
+| `windows.malware.processghosting` | `windows_malware_processghosting` | Detect Process Ghosting (DeletePending / DeleteOnClose images) |
+| `windows.malware.hollowprocesses` | `windows_malware_hollowprocesses(pid=0)` | Detect Process Hollowing (image-base mismatch / VAD anomalies) |
+| `windows.malware.pebmasquerade` | `windows_malware_pebmasquerade(pid=0)` | Detect PEB ImageFilePath / CommandLine spoofing |
+| `windows.malware.suspicious_threads` | `windows_malware_suspicious_threads(pid=0)` | Flag userland threads starting in non-image / RWX VADs (injection) |
+| `windows.malware.psxview` | `windows_malware_psxview(physical_offsets=False)` | Cross-view process enumeration (pslist / psscan / thrdscan / csrss) |

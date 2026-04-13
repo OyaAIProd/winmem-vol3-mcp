@@ -2,11 +2,18 @@
 
 ## 0. Remaining Plugin Implementation
 
-49 plugins from v2.7.0 are fully integrated. After upgrading to v2.27.0,
-42 new plugins were initially identified. Investigation revealed **8 of these
-are deprecated `PluginRenameClass` wrappers** that redirect to canonical
-implementations elsewhere. These wrappers are excluded to avoid duplicate
-MCP tools and deprecation warnings. Effective total: **34 plugins**.
+**Status (2026-04-13): COMPLETE.** All 79 non-deprecated Windows plugins
+in volatility3 v2.27.0 are integrated as MCP tools. The v2.7.0 baseline of
+49 plugins was extended by 30 new tools (34 fresh plugins minus 4 already
+shipped under their canonical `windows_malware_*` names during the rename
+audit). The 8 deprecated `PluginRenameClass` wrappers (`removal_date`
+2026-06-07 / 2026-09-25) were intentionally excluded so the MCP surface
+exposes only canonical paths.
+
+Original investigation found 42 new plugins after the v2.27.0 upgrade;
+**8 turned out to be deprecated wrappers** redirecting to canonical
+implementations elsewhere — excluded to avoid duplicate MCP tools and
+deprecation warnings. Effective new total implemented: **34 plugins**.
 
 Deprecated wrappers dropped (kept only under their canonical path):
 - `windows.suspicious_threads` → canonical `windows.malware.suspicious_threads`
@@ -83,6 +90,12 @@ create a category sub-branch, implement one plugin per commit, merge back.
   `windows.malware.unhooked_system_calls.UnhookedSystemCalls`, which is
   already listed in the Malware category. Dropping the Kernel alias avoids
   the duplicate MCP tool. Total new plugins: 35 → 34.
+- **2026-04-13** — v2.27.0 plugin coverage **complete**: 79/79
+  non-deprecated Windows plugins are now exposed as MCP tools across
+  all categories (Malware, Process, Service, Registry, Kernel,
+  Desktop/GUI, Memory, Module, Other). Future plugin work depends on
+  upstream volatility3 releases adding new windows.* / windows.malware.*
+  modules; section 0 will be reopened then.
 
 ---
 

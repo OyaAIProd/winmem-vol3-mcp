@@ -2820,6 +2820,308 @@ def windows_windows() -> dict:
 
 
 @mcp.tool()
+def windows_malware_unhooked_system_calls() -> dict:
+    """
+    Run the malware.unhooked_system_calls plugin to detect ntdll.dll
+    syscall stubs whose prologues differ across processes — the classic
+    signature of EDR / userland-hooking frameworks (and increasingly
+    of unhooking malware that restores stubs from disk to bypass EDR).
+
+    Use this tool when the user asks about:
+    - EDR / antivirus userland hooks on ntdll syscall stubs
+    - Malware unhooking (restoring original ntdll bytes to evade EDR)
+    - Differences between processes' ntdll prologues
+    - Identifying which Nt* / Zw* functions are the most commonly hooked
+    - Detecting AMSI / ETW / hooking-bypass tooling indirectly via
+      stub divergence
+
+    Returns a dict with:
+    - "plugin": "malware.unhooked_system_calls"
+    - "results": list of dicts (one row per syscall function whose
+      first instruction bytes differ across at least two processes):
+        "Function": ntdll syscall name (e.g. ``NtCreateFile``) (str),
+        "Distinct Implementations": comma-separated count of unique
+          prologue byte sequences observed (str),
+        "Total Implementations": total processes inspected (int)
+
+    Forensic context:
+    - All clean processes share an identical syscall stub prologue
+      (mov eax, <syscall#>; syscall; ret on x64). Any function with
+      ``Distinct Implementations`` > 1 means at least one process
+      runs a different prologue — a hook (EDR or malware) or an
+      unhook (malware that overwrote a hook with the original bytes)
+    - Functions touched by EDR commonly include NtCreateFile,
+      NtWriteFile, NtAllocateVirtualMemory, NtProtectVirtualMemory,
+      NtCreateThreadEx, LdrLoadDll, EtwEventWrite — divergence on
+      these in a non-EDR-instrumented system is high-signal malicious
+    - Combine with windows_etwpatch (ETW-stub tampering) and
+      windows_malware_malfind (injected code in suspect VADs) to
+      attribute the divergence to a specific PID
+    - Requires successful PDB symbol download for ntdll at startup;
+      otherwise the plugin cannot map syscall numbers to function
+      names
+    """
+    return session.run_plugin("malware.unhooked_system_calls")
+
+
+@mcp.tool()
+def windows_malware_svcdiff() -> dict:
+    """
+    Run the malware.svcdiff plugin to diff windows_svclist (linked-list
+    walk) against windows_svcscan (signature scan) and report only the
+    services present in one view but missing from the other — a classic
+    DKOM / service-hiding rootkit indicator.
+
+    Use this tool when the user asks about:
+    - Hidden Windows services
+    - DKOM tampering of the SCM service record list
+    - Discrepancy between linked-list and pool-scan service views
+    - Quick triage for suspected service-hiding rootkits
+
+    Returns a dict with:
+    - "plugin": "malware.svcdiff"
+    - "results": list of dicts using the same schema as windows_svcscan
+      (Offset, Order, PID, Start, State, Type, Name, Display, Binary,
+      Binary (Registry), Dll), but limited to entries that disagree
+      between the two enumeration methods.
+
+    Forensic context:
+    - Note: requires Windows 10 build 15063+ on a 64-bit image (same
+      restriction as windows_svclist). On older / 32-bit images the
+      plugin returns an empty result and logs a warning
+    - Any non-empty row is high-signal: the service exists in memory
+      but has been unlinked from SCM's list. Investigate the Binary
+      and Dll columns immediately
+    - Save the manual diff cycle: skips the need to run windows_svclist
+      and windows_svcscan separately and compare Names by hand
+    """
+    return session.run_plugin("malware.svcdiff")
+
+
+@mcp.tool()
+def windows_malware_processghosting() -> dict:
+    """
+    Run the malware.processghosting plugin to detect processes created
+    via the Process Ghosting technique — where the source executable
+    is marked for deletion (or its FILE_OBJECT zeroed / mapped with
+    DeleteOnClose VAD) before the process image section is created,
+    so on-disk forensics finds nothing while the process runs.
+
+    Use this tool when the user asks about:
+    - Process Ghosting detection (MITRE ATT&CK T1620)
+    - Processes whose backing executable no longer exists on disk
+    - Anti-forensics techniques that delete the EXE before execution
+    - Suspicious processes whose Path is unrecoverable
+
+    Returns a dict with:
+    - "plugin": "malware.processghosting"
+    - "results": list of dicts (one row per ghosted process):
+        "PID": process ID (int),
+        "Process": process image name (str),
+        "Base": base address of the process image (str, hex),
+        "FILE_OBJECT": _FILE_OBJECT pointer for the EXE; 0 indicates a
+          ghosting indicator (str, hex),
+        "DeletePending": 1 if the file's DeletePending flag is set
+          (a textbook ghosting signature) (int),
+        "DeleteOnClose": 1 if the section was opened with
+          FILE_DELETE_ON_CLOSE (an alternative ghosting signature) (int),
+        "Path": last known on-disk path of the EXE (str)
+
+    Forensic context:
+    - Process Ghosting first publicized by Elastic in 2021. Any
+      non-empty result is high-signal: legitimate processes do not
+      run from images marked DeletePending or DeleteOnClose
+    - Pair with windows_pslist (process is alive) and
+      windows_malware_pebmasquerade (the PEB may also be spoofed to
+      hide the original ghost name)
+    - Use windows_pedump(base=Base, pid=PID) to recover the in-memory
+      executable, since the on-disk version is gone
+    """
+    return session.run_plugin("malware.processghosting")
+
+
+@mcp.tool()
+def windows_malware_hollowprocesses(pid: int = 0) -> dict:
+    """
+    Run the malware.hollowprocesses plugin to detect Process Hollowing —
+    where a legitimate process is created, its image base unmapped, and
+    replaced with malicious code that runs under the original name.
+
+    Use this tool when the user asks about:
+    - Process hollowing detection (MITRE ATT&CK T1055.012)
+    - Processes whose ImageBaseAddress no longer matches the original
+      executable
+    - Identifying svchost.exe / explorer.exe / lsass.exe etc. that have
+      been hijacked
+    - VAD-protection inconsistencies on a process's main image region
+
+    Arguments:
+    - pid (optional, default 0): restrict the scan to a single process.
+      0 inspects every process.
+
+    Returns a dict with:
+    - "plugin": "malware.hollowprocesses"
+    - "results": list of dicts (one row per suspect process):
+        "PID": process ID (int),
+        "Process": process image name (str),
+        "Notes": human-readable explanation of why the process was
+          flagged (e.g. ImageBase mismatch, VAD protection anomaly,
+          missing on-disk backing) (str)
+
+    Forensic context:
+    - Hollowing creates a process with one image then swaps it for
+      another, so the on-disk EXE name is innocuous but the running
+      code is malicious. Look closely at any process flagged here
+    - Pair with windows_malware_pebmasquerade (PEB spoofing often
+      accompanies hollowing) and windows_pedump(base=..., pid=PID) to
+      recover the actually-running PE for static analysis
+    - Suspended-thread + hollowing is a classic combo: the thread is
+      created suspended, the image swapped, then the thread resumed.
+      Check windows_suspended_threads for the same PID
+    """
+    return session.run_plugin("malware.hollowprocesses", pid=pid)
+
+
+@mcp.tool()
+def windows_malware_pebmasquerade(pid: int = 0) -> dict:
+    """
+    Run the malware.pebmasquerade plugin to detect PEB Masquerading —
+    where a process spoofs its PEB ImageFilePath / CommandLine fields
+    to disguise itself as a legitimate executable.
+
+    Use this tool when the user asks about:
+    - PEB masquerading / PEB spoofing detection
+    - Discrepancies between EPROCESS.ImageFileName and PEB.ImageFilePath
+    - Processes whose command line was rewritten after launch
+    - Anti-forensic process renaming techniques
+
+    Arguments:
+    - pid (optional, default 0): restrict the scan to a single process.
+
+    Returns a dict with:
+    - "plugin": "malware.pebmasquerade"
+    - "results": list of dicts (one row per process):
+        "PID": process ID (int),
+        "EPROCESS_ImageFileName": short image name from EPROCESS (str),
+        "EPROCESS_SeAudit_ImageFileName": full path from SeAuditProcess
+          information (str),
+        "PEB_ImageFilePath": process's own PEB-reported image path (str),
+        "PEB_ImageFilePath_Spoofed": True if PEB image path disagrees
+          with kernel-side records (bool),
+        "PEB_CommandLine_Spoofed": True if the PEB command line was
+          rewritten after process creation (bool)
+
+    Forensic context:
+    - Either Spoofed flag = True is high-signal: the process is lying
+      about what it is. Common with hollowing or doppelganging
+    - Many EDR rules and analyst tooling read the PEB; spoofing it
+      defeats those checks while EPROCESS.ImageFileName (kernel-only)
+      still tells the truth — which is exactly what this plugin
+      compares
+    - Pair with windows_malware_hollowprocesses (often co-occurs) and
+      windows_pedump on the suspect PID to capture the actually-running
+      image for static analysis
+    """
+    return session.run_plugin("malware.pebmasquerade", pid=pid)
+
+
+@mcp.tool()
+def windows_malware_suspicious_threads(pid: int = 0) -> dict:
+    """
+    Run the malware.suspicious_threads plugin to surface userland
+    threads whose start address falls inside an anomalous VAD —
+    typically a non-image, non-mapped, RWX region — which is the
+    canonical signature of code injection.
+
+    Use this tool when the user asks about:
+    - Code-injection detection (CreateRemoteThread, NtQueueApcThread,
+      etc.)
+    - Threads running from unbacked / non-image memory
+    - Suspicious thread analysis beyond what windows_threads surfaces
+    - Quick triage for any process suspected of containing shellcode
+
+    Arguments:
+    - pid (optional, default 0): restrict to one process. 0 inspects
+      every userland process.
+
+    Returns a dict with:
+    - "plugin": "malware.suspicious_threads"
+    - "results": list of dicts (one row per anomalous thread):
+        "Process": process image name (str),
+        "PID": process ID (int),
+        "TID": thread ID (int),
+        "Context": thread context summary (str),
+        "Address": thread start address (str, hex),
+        "VAD Path": path of the VAD backing the start address, or
+          "" / None when the VAD has no associated file (the
+          high-signal case) (str),
+        "Note": human-readable explanation of why the thread was
+          flagged (str)
+
+    Forensic context:
+    - Rows where ``VAD Path`` is empty / None mean the thread is
+      executing from memory not backed by any module — almost
+      certainly injected shellcode
+    - Pair with windows_malware_malfind on the same PID to see the
+      injected memory region's bytes, then windows_pedump to recover
+      it for offline analysis
+    - Cross-reference with windows_suspended_threads: if the
+      suspicious thread is also suspended, the injection is
+      mid-staging (Process Hollowing or remote thread injection
+      paused before resume)
+    """
+    return session.run_plugin("malware.suspicious_threads", pid=pid)
+
+
+@mcp.tool()
+def windows_malware_psxview(physical_offsets: bool = False) -> dict:
+    """
+    Run the malware.psxview plugin (the canonical psxview, "The Art of
+    Memory Forensics" cross-view technique) to compare four independent
+    process-enumeration sources and surface processes that show up in
+    some but not others — a generalized hidden-process detector.
+
+    Use this tool when the user asks about:
+    - Hidden / unlinked process detection
+    - Comparing pslist vs psscan vs thread-scan vs CSRSS handles
+    - Cross-view rootkit detection (DKOM, EPROCESS unlinking)
+    - Quick triage when something is suspected of hiding from pslist
+
+    Arguments:
+    - physical_offsets (optional, default False): if True, the Offset
+      column reports physical addresses (matches pool-scan results);
+      default reports virtual addresses.
+
+    Returns a dict with:
+    - "plugin": "malware.psxview"
+    - "results": list of dicts, each containing:
+        "Offset(Virtual)" / "Offset(Physical)": process offset (str, hex)
+          (column name varies based on physical_offsets argument),
+        "Name": process image name (str),
+        "PID": process ID (int),
+        "pslist": True if visible to active-list walk (bool),
+        "psscan": True if visible to pool-tag scan (bool),
+        "thrdscan": True if visible via owning-thread enumeration (bool),
+        "csrss": True if registered in csrss.exe handle table (bool),
+        "Exit Time": process exit timestamp, or empty for live procs (str)
+
+    Forensic context:
+    - The classic "True / True / True / True / empty Exit Time" row is a
+      legitimate live process. Any False in the first four columns on a
+      live process (no Exit Time) deserves investigation
+    - psscan-only (True for psscan, False elsewhere) ⇒ DKOM-unlinked
+      process — high-signal rootkit
+    - thrdscan-only (True for thrdscan only) ⇒ pool-scrubbed EPROCESS
+      with surviving threads — also high-signal
+    - csrss-only ⇒ a live process whose EPROCESS has been deeply
+      scrubbed but is still tracked by the windowing subsystem
+    - Pair with windows_pslist / windows_psscan for raw enumeration
+      detail when this tool flags a discrepancy
+    """
+    return session.run_plugin("malware.psxview", physical_offsets=physical_offsets)
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /

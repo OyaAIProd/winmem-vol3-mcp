@@ -71,7 +71,7 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-72 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
+79 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools, covering every non-deprecated plugin in the framework's Windows tree. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference; `plan.md` documents the 8 deprecated `PluginRenameClass` wrappers that were intentionally excluded.
 
 | Category | Plugins |
 |---|---|
@@ -87,7 +87,7 @@ You can then ask follow-up questions to dig deeper:
 | Console / Shell | consoles, cmdscan |
 | System Information | info, statistics, crashinfo |
 | Security / Integrity | mbrscan, truecrypt, getservicesids, suspended_threads |
-| Malware Detection | malware.drivermodule, malware.ldrmodules, malware.malfind, malware.skeleton_key_check |
+| Malware Detection | malware.drivermodule, malware.ldrmodules, malware.malfind, malware.skeleton_key_check, malware.unhooked_system_calls, malware.svcdiff, malware.processghosting, malware.hollowprocesses, malware.pebmasquerade, malware.suspicious_threads, malware.psxview |
 
 ## Architecture
 
