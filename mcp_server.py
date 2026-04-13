@@ -2739,5 +2739,43 @@ def windows_desktops() -> dict:
     return session.run_plugin("desktops")
 
 
+@mcp.tool()
+def windows_deskscan() -> dict:
+    """
+    Run the deskscan plugin to discover ``tagDESKTOP`` objects via pool
+    tag scanning instead of walking the WindowStation desktop list. This
+    surfaces hidden / unlinked desktops that windows_desktops would miss.
+
+    Use this tool when the user asks about:
+    - Hidden or unlinked desktops not reachable from a WindowStation list
+    - Detection of desktop hijacking / sandbox-evasion artifacts
+    - A scan-based view to compare against the linked-list windows_desktops
+    - Recovering desktop objects from images where standard enumeration
+      yields nothing
+
+    Returns a dict with:
+    - "plugin": "deskscan"
+    - "results": list of dicts with the same schema as windows_desktops:
+        "Offset": virtual address of the _tagDESKTOP object (str, hex),
+        "Window Station": parent WindowStation name (str),
+        "Session": session ID (int),
+        "Desktop": desktop name (str),
+        "Process": process attached to the desktop (str),
+        "PID": process ID (int)
+
+    Forensic context:
+    - The classic list-vs-scan pattern (cf. windows_pslist vs
+      windows_psscan): rows present here but absent from
+      windows_desktops are hidden / DKOM-removed desktops
+    - Use as a fallback when windows_desktops returns empty due to GUI
+      symbol limitations on older Windows images — the scan path may
+      still surface objects via pool tags
+    - Suspicious desktop names (anything other than ``Default`` /
+      ``Winlogon`` / ``Disconnect``) deserve cross-reference with
+      windows_pslist for the attached process
+    """
+    return session.run_plugin("deskscan")
+
+
 if __name__ == "__main__":
     mcp.run()

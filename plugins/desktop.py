@@ -24,7 +24,14 @@ def run_desktops(session: Session) -> dict:
     return {"plugin": "desktops", "results": parse_treegrid(treegrid)}
 
 
+def run_deskscan(session: Session) -> dict:
+    """Run windows.deskscan and return desktops found by pool-tag scanning."""
+    treegrid = run_plugin(session, deskscan.DeskScan)
+    return {"plugin": "deskscan", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
+    "deskscan": run_deskscan,
     "desktops": run_desktops,
     "windowstations": run_windowstations,
 }
