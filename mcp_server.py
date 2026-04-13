@@ -2777,5 +2777,54 @@ def windows_deskscan() -> dict:
     return session.run_plugin("deskscan")
 
 
+@mcp.tool()
+def windows_consoles(no_registry: bool = False) -> dict:
+    """
+    Run the consoles plugin to recover console host (conhost.exe /
+    csrss.exe legacy) artifacts from memory: scrollback screen buffers,
+    typed command history, alias data, and connected process info.
+
+    Use this tool when the user asks about:
+    - What commands a user typed in cmd.exe / PowerShell at the console
+    - Console screen buffer / scrollback contents (visible terminal text)
+    - History of commands recovered from a memory image
+    - Reconstructing an interactive shell session that the user closed
+    - Forensic IR scenarios where the suspect typed but logs were wiped
+
+    Arguments:
+    - no_registry (optional, default False): skip the registry-based
+      console signature lookup. Set True for a faster scan when the
+      registry hive is unreadable; may miss some console types on
+      newer Windows builds.
+
+    Returns a dict with:
+    - "plugin": "consoles"
+    - "results": list of dicts (multiple rows per console — one per
+      property emitted by the parser):
+        "PID": process ID hosting the console (typically conhost.exe or
+          csrss.exe; on older Windows the cmd.exe PID itself) (int),
+        "Process": image name (str),
+        "ConsoleInfo": offset of the _CONSOLE_INFORMATION structure
+          (str, hex),
+        "Property": property name such as Title, OriginalTitle,
+          ScreenBuffer, History, Alias (str),
+        "Address": virtual address of the property's data (str, hex),
+        "Data": the recovered string content (str)
+
+    Forensic context:
+    - Console artifacts persist after the shell window is closed, until
+      the host process is reaped; one of the highest-fidelity records
+      of attacker keystrokes during interactive sessions
+    - Look for ``Property == "History"`` rows for the literal command
+      history; ``Property == "ScreenBuffer"`` reveals the visible
+      terminal output the user saw (commands + output)
+    - Cross-reference recovered commands against windows_cmdline (the
+      command line that started a process) and windows_pslist
+      (parent/child) to confirm execution chains
+    - Use windows_cmdscan for a focused command-history-only view
+    """
+    return session.run_plugin("consoles", no_registry=no_registry)
+
+
 if __name__ == "__main__":
     mcp.run()
