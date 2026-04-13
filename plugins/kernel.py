@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import bigpools, callbacks, devicetree, driverirp, driverscan, poolscanner, ssdt
+from volatility3.plugins.windows import bigpools, callbacks, debugregisters, devicetree, driverirp, driverscan, etwpatch, kpcrs, poolscanner, ssdt, timers, unloadedmodules
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -54,12 +54,19 @@ def run_driverscan(session: Session) -> dict:
     return {"plugin": "driverscan", "results": parse_treegrid(treegrid)}
 
 
+def run_kpcrs(session: Session) -> dict:
+    """Run windows.kpcrs and return per-CPU KPCR / PRCB offsets."""
+    treegrid = run_plugin(session, kpcrs.KPCRs)
+    return {"plugin": "kpcrs", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "bigpools": run_bigpools,
     "callbacks": run_callbacks,
     "devicetree": run_devicetree,
     "driverirp": run_driverirp,
     "driverscan": run_driverscan,
+    "kpcrs": run_kpcrs,
     "poolscanner": run_poolscanner,
     "ssdt": run_ssdt,
 }

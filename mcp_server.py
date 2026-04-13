@@ -2357,6 +2357,38 @@ def windows_bigpools() -> dict:
 
 
 @mcp.tool()
+def windows_kpcrs() -> dict:
+    """
+    Run the kpcrs plugin to enumerate every Windows Kernel Processor
+    Control Region (KPCR) structure and its PRCB (Processor Control
+    Block) offset — one KPCR per logical CPU.
+
+    Use this tool when the user asks about:
+    - How many CPUs / cores were online at capture time
+    - KPCR / PRCB addresses for each processor
+    - Per-CPU kernel state starting points for deeper analysis
+    - Verifying the image's SMP layout matches the system profile
+
+    Returns a dict with:
+    - "plugin": "kpcrs"
+    - "results": list of dicts (one row per logical CPU), each containing:
+        "Offset": virtual address of the _KPCR structure (str, hex),
+        "PRCB Offset": virtual address of the embedded _KPRCB (str, hex)
+
+    Forensic context:
+    - Row count equals the logical CPU count visible at acquisition
+      time; an unexpected count can indicate a corrupted image or the
+      wrong symbol profile
+    - The PRCB pointer is the entry point for per-CPU kernel state
+      (current thread, idle thread, DPC queues). Many other plugins
+      (e.g. windows_timers) rely on these offsets internally
+    - Mismatched or zero PRCB offsets can be a smear / corruption
+      indicator on live-acquired images
+    """
+    return session.run_plugin("kpcrs")
+
+
+@mcp.tool()
 def windows_svcscan() -> dict:
     """
     Run the svcscan plugin to enumerate Windows services by scanning the
