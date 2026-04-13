@@ -2357,6 +2357,221 @@ def windows_bigpools() -> dict:
 
 
 @mcp.tool()
+def windows_kpcrs() -> dict:
+    """
+    Run the kpcrs plugin to enumerate every Windows Kernel Processor
+    Control Region (KPCR) structure and its PRCB (Processor Control
+    Block) offset — one KPCR per logical CPU.
+
+    Use this tool when the user asks about:
+    - How many CPUs / cores were online at capture time
+    - KPCR / PRCB addresses for each processor
+    - Per-CPU kernel state starting points for deeper analysis
+    - Verifying the image's SMP layout matches the system profile
+
+    Returns a dict with:
+    - "plugin": "kpcrs"
+    - "results": list of dicts (one row per logical CPU), each containing:
+        "Offset": virtual address of the _KPCR structure (str, hex),
+        "PRCB Offset": virtual address of the embedded _KPRCB (str, hex)
+
+    Forensic context:
+    - Row count equals the logical CPU count visible at acquisition
+      time; an unexpected count can indicate a corrupted image or the
+      wrong symbol profile
+    - The PRCB pointer is the entry point for per-CPU kernel state
+      (current thread, idle thread, DPC queues). Many other plugins
+      (e.g. windows_timers) rely on these offsets internally
+    - Mismatched or zero PRCB offsets can be a smear / corruption
+      indicator on live-acquired images
+    """
+    return session.run_plugin("kpcrs")
+
+
+@mcp.tool()
+def windows_unloadedmodules() -> dict:
+    """
+    Run the unloadedmodules plugin to list kernel drivers / modules that
+    have been unloaded but whose names the kernel still tracks in its
+    MmUnloadedDrivers history array.
+
+    Use this tool when the user asks about:
+    - Drivers that were loaded then unloaded during the capture window
+    - Traces of transient kernel malware (e.g. load → exploit → unload)
+    - Historical driver activity no longer visible in windows_modules
+    - Unload timestamps for forensic timeline construction
+    - Signs of a rootkit that deliberately unloads itself to hide
+
+    Returns a dict with:
+    - "plugin": "unloadedmodules"
+    - "results": list of dicts, each containing:
+        "Name": driver / module filename (str),
+        "StartAddress": original load base address (str, hex),
+        "EndAddress": end of the driver's loaded range (str, hex),
+        "Time": timestamp when the driver was unloaded (str, UTC)
+
+    Forensic context:
+    - Windows keeps a small ring of recently-unloaded driver entries
+      (MmUnloadedDrivers); this plugin reads that ring. A short name
+      appearing here but absent from both windows_modules and
+      windows_modscan is a classic load-and-unload rootkit pattern
+    - Compare Time values against suspicious process creation or
+      network activity timestamps to connect a driver's lifecycle to
+      observed behavior
+    - StartAddress / EndAddress give you the memory range the driver
+      occupied; correlate with windows_callbacks / windows_ssdt hook
+      entries pointing into those ranges to attribute hooks to the
+      unloaded driver
+    - An unexpectedly large number of unloaded drivers may indicate
+      repeated crash / reload cycles on the image
+    """
+    return session.run_plugin("unloadedmodules")
+
+
+@mcp.tool()
+def windows_timers() -> dict:
+    """
+    Run the timers plugin to enumerate every kernel-level DPC timer
+    registered on each CPU and resolve its routine address to the owning
+    module/symbol.
+
+    Use this tool when the user asks about:
+    - Kernel timers / DPC routines scheduled on the system
+    - Timer-based rootkit persistence (repeating DPCs that hook kernel work)
+    - Which driver owns a particular timer callback
+    - Suspiciously short-period timers that keep malicious code alive
+    - Callbacks whose routine address doesn't resolve to any module
+
+    Returns a dict with:
+    - "plugin": "timers"
+    - "results": list of dicts, each containing:
+        "Offset": virtual address of the _KTIMER structure (str, hex),
+        "DueTime": 100-nanosecond absolute time the timer is due (str),
+        "Period(ms)": periodic interval in milliseconds; 0 means one-shot
+          (int),
+        "Signaled": whether the timer is currently signaled (str),
+        "Routine": address of the DPC routine that fires when the timer
+          expires (str, hex),
+        "Module": module that owns the Routine address, or None if the
+          address does not map to any loaded module (str or None),
+        "Symbol": symbol name at Routine, when resolvable (str or None)
+
+    Forensic context:
+    - Timers whose ``Module`` is None / UNKNOWN are the highest-signal
+      rows: a DPC firing from unbacked memory is almost certainly
+      rootkit-injected kernel code
+    - Unexpectedly short ``Period(ms)`` values on timers owned by
+      non-standard modules (e.g. <= 100 ms on a driver nobody loaded)
+      is a persistence pattern — the routine keeps re-waking to
+      maintain hooks or heartbeats
+    - Cross-reference ``Module`` against windows_modscan and
+      windows_unloadedmodules: a timer pointing into an unloaded or
+      unlinked module is a load-and-unload rootkit indicator
+    - Use windows_pe_symbols to reverse-resolve the ``Routine`` address
+      when ``Symbol`` is empty but you recognise the ``Module``
+    """
+    return session.run_plugin("timers")
+
+
+@mcp.tool()
+def windows_debugregisters() -> dict:
+    """
+    Run the debugregisters plugin to dump each thread's hardware
+    debug-register state (DR0-DR3 addresses, DR7 control) and resolve
+    every non-zero breakpoint address to its owning module/symbol.
+
+    Use this tool when the user asks about:
+    - Hardware breakpoints set on the system
+    - Debug register hijacking or EDR-evasion via DR hooks
+    - Malware using DR0-DR3 to intercept API calls without patching code
+    - Threads attached to a debugger with active HW breakpoints
+    - Explaining unusual Dr7 bit patterns across threads
+
+    Returns a dict with:
+    - "plugin": "debugregisters"
+    - "results": list of dicts (one row per thread whose DR state is
+      non-zero), each containing:
+        "Process": owning process image name (str),
+        "PID": process ID (int),
+        "TID": thread ID (int),
+        "State": thread state code (int),
+        "Dr7": raw DR7 control register value (int),
+        "Dr0", "Dr1", "Dr2", "Dr3": breakpoint addresses (str, hex),
+        "Range0..3": memory range / module backing each breakpoint
+          address (str or None),
+        "Symbol0..3": symbol name at each breakpoint address, when
+          resolvable (str or None)
+
+    Forensic context:
+    - Hardware breakpoints are invisible to user-space code (no INT3
+      patching), so malware uses them to hook APIs like NtCreateFile,
+      LdrLoadDll, or csrss's ConsoleAlloc handlers while leaving
+      memory untouched — any thread with non-null DR0-DR3 in a
+      non-debugger process is suspicious
+    - Look at Dr7 layout: the lower 8 bits enable DR0-DR3 per-thread;
+      the upper bits encode condition (execute/write/IO/read-write)
+      and length. Suspicious DR7 on non-debugger threads deserves
+      scrutiny
+    - Range / Symbol columns let you immediately see which API was
+      being watched — e.g. Symbol1="LdrLoadDll" in a non-debugger
+      process is almost certainly an EDR-evasion hook
+    - Cross-reference the TID with windows_threads to get the thread's
+      StartAddress, and windows_malware_malfind to see if the owning
+      VAD was injected
+    """
+    return session.run_plugin("debugregisters")
+
+
+@mcp.tool()
+def windows_etwpatch(pid: int = 0) -> dict:
+    """
+    Run the etwpatch plugin to detect in-memory tampering of ETW
+    (Event Tracing for Windows) stub functions inside ntdll.dll —
+    a common evasion technique to blind security telemetry.
+
+    Use this tool when the user asks about:
+    - ETW patching, ETW tampering, or ETW evasion
+    - EDR / antivirus telemetry disabling in user mode
+    - Malware hooking EtwEventWrite / NtTraceEvent / EtwNotificationRegister
+    - Processes with unusual ETW stub prologues (e.g., ``ret`` replacing
+      the real body)
+    - Detection of userland AMSI / ETW bypass injected into a specific PID
+
+    Arguments:
+    - pid (optional, default 0): restrict the scan to this process. When
+      0, every userland process is inspected.
+
+    Returns a dict with:
+    - "plugin": "etwpatch"
+    - "results": list of dicts (one row per patched stub detected):
+        "PID": process ID hosting the patched ntdll (int),
+        "Process": image name (str),
+        "DLL": name of the module that was tampered (typically
+          ``ntdll.dll``) (str),
+        "Function": the ETW function whose prologue differs from the
+          on-disk image (str),
+        "Offset": virtual address of the patched instruction (str, hex),
+        "Opcode": disassembly of the patched bytes (str)
+
+    Forensic context:
+    - Any non-empty result is high-signal. Modern malware commonly
+      writes ``ret`` (0xC3) or a short jump into the start of ETW
+      functions to silence telemetry inside the current process
+    - If only a subset of processes shows patches, they are usually
+      the infected ones — combine with windows_malware_malfind and
+      windows_cmdline to attribute the tampering
+    - Uses windows_pe_symbols internally for function-address
+      resolution, so symbol availability matters: if PDBs fail to
+      download at startup, the plugin cannot compare against on-disk
+      prologues
+    - Pair with windows_suspended_threads: ETW patching is often done
+      by an injected remote thread — the thread is suspended, DLLs
+      loaded, ntdll patched, then resumed
+    """
+    return session.run_plugin("etwpatch", pid=pid)
+
+
+@mcp.tool()
 def windows_svcscan() -> dict:
     """
     Run the svcscan plugin to enumerate Windows services by scanning the
