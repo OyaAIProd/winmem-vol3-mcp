@@ -2663,5 +2663,39 @@ def windows_svclist() -> dict:
     return session.run_plugin("svclist")
 
 
+@mcp.tool()
+def windows_windowstations() -> dict:
+    """
+    Run the windowstations plugin to enumerate every Windows ``tagWINDOWSTATION``
+    object — the top-level container that scopes interactive desktops,
+    clipboard, and atom tables for a logon session.
+
+    Use this tool when the user asks about:
+    - Window stations or interactive sessions on the system
+    - Service-vs-interactive isolation (Service-0x0-3e7$ etc.)
+    - The set of session IDs at the GUI subsystem level
+    - First step before enumerating windows_desktops or windows_deskscan
+    - Investigating clipboard / atom-based malware persistence
+
+    Returns a dict with:
+    - "plugin": "windowstations"
+    - "results": list of dicts, each containing:
+        "Offset": virtual address of the _tagWINDOWSTATION object (str, hex),
+        "Name": window station name (e.g., ``WinSta0`` for the interactive
+          station; ``Service-0x0-3e7$`` for the SYSTEM session) (str),
+        "SessionId": session ID owning this window station (int)
+
+    Forensic context:
+    - WinSta0 in SessionId > 0 indicates an active interactive logon —
+      compare with windows_sessions to attribute it to a user
+    - Anomalous or duplicate window station names can indicate
+      isolation-bypass tools that create their own GUI sandboxes
+    - Use the offsets from this output as input scope for
+      windows_desktops (per-station desktop walk) and windows_deskscan
+      (pool-tag scan that may surface hidden desktops)
+    """
+    return session.run_plugin("windowstations")
+
+
 if __name__ == "__main__":
     mcp.run()
