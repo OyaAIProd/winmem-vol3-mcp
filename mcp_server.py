@@ -2389,6 +2389,46 @@ def windows_kpcrs() -> dict:
 
 
 @mcp.tool()
+def windows_unloadedmodules() -> dict:
+    """
+    Run the unloadedmodules plugin to list kernel drivers / modules that
+    have been unloaded but whose names the kernel still tracks in its
+    MmUnloadedDrivers history array.
+
+    Use this tool when the user asks about:
+    - Drivers that were loaded then unloaded during the capture window
+    - Traces of transient kernel malware (e.g. load → exploit → unload)
+    - Historical driver activity no longer visible in windows_modules
+    - Unload timestamps for forensic timeline construction
+    - Signs of a rootkit that deliberately unloads itself to hide
+
+    Returns a dict with:
+    - "plugin": "unloadedmodules"
+    - "results": list of dicts, each containing:
+        "Name": driver / module filename (str),
+        "StartAddress": original load base address (str, hex),
+        "EndAddress": end of the driver's loaded range (str, hex),
+        "Time": timestamp when the driver was unloaded (str, UTC)
+
+    Forensic context:
+    - Windows keeps a small ring of recently-unloaded driver entries
+      (MmUnloadedDrivers); this plugin reads that ring. A short name
+      appearing here but absent from both windows_modules and
+      windows_modscan is a classic load-and-unload rootkit pattern
+    - Compare Time values against suspicious process creation or
+      network activity timestamps to connect a driver's lifecycle to
+      observed behavior
+    - StartAddress / EndAddress give you the memory range the driver
+      occupied; correlate with windows_callbacks / windows_ssdt hook
+      entries pointing into those ranges to attribute hooks to the
+      unloaded driver
+    - An unexpectedly large number of unloaded drivers may indicate
+      repeated crash / reload cycles on the image
+    """
+    return session.run_plugin("unloadedmodules")
+
+
+@mcp.tool()
 def windows_svcscan() -> dict:
     """
     Run the svcscan plugin to enumerate Windows services by scanning the

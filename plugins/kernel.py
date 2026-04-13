@@ -60,6 +60,12 @@ def run_kpcrs(session: Session) -> dict:
     return {"plugin": "kpcrs", "results": parse_treegrid(treegrid)}
 
 
+def run_unloadedmodules(session: Session) -> dict:
+    """Run windows.unloadedmodules and return recently unloaded kernel modules."""
+    treegrid = run_plugin(session, unloadedmodules.UnloadedModules)
+    return {"plugin": "unloadedmodules", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "bigpools": run_bigpools,
     "callbacks": run_callbacks,
@@ -69,4 +75,5 @@ PLUGIN_MAP = {
     "kpcrs": run_kpcrs,
     "poolscanner": run_poolscanner,
     "ssdt": run_ssdt,
+    "unloadedmodules": run_unloadedmodules,
 }
