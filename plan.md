@@ -3,10 +3,10 @@
 ## 0. Remaining Plugin Implementation
 
 49 plugins from v2.7.0 are fully integrated. After upgrading to v2.27.0,
-42 new plugins were initially identified. Investigation revealed **7 of these
+42 new plugins were initially identified. Investigation revealed **8 of these
 are deprecated `PluginRenameClass` wrappers** that redirect to canonical
 implementations elsewhere. These wrappers are excluded to avoid duplicate
-MCP tools and deprecation warnings. Effective total: **35 plugins**.
+MCP tools and deprecation warnings. Effective total: **34 plugins**.
 
 Deprecated wrappers dropped (kept only under their canonical path):
 - `windows.suspicious_threads` → canonical `windows.malware.suspicious_threads`
@@ -20,8 +20,11 @@ Deprecated wrappers dropped (kept only under their canonical path):
   in the plan; expose only the canonical path)
 - `windows.amcache` → canonical `windows.registry.amcache`
   (same duplicate-alias pattern; only expose the registry.* canonical)
+- `windows.unhooked_system_calls` → canonical
+  `windows.malware.unhooked_system_calls` (already in the Malware category;
+  Kernel duplicate dropped)
 
-New plugins by category (35 total):
+New plugins by category (34 total):
 
 - **Malware** (7 remaining; 4 already shipped under `windows_malware_*`):
   malware.hollowprocesses, malware.pebmasquerade, malware.processghosting,
@@ -33,8 +36,7 @@ New plugins by category (35 total):
 - **Process** (3): threads, orphan_kernel_threads, suspended_threads
 - **Service** (3): svclist, svcscan, registry.scheduled_tasks
 - **Registry** (2): registry.amcache, registry.getcellroutine
-- **Kernel** (6): debugregisters, etwpatch, kpcrs, timers,
-  unhooked_system_calls, unloadedmodules
+- **Kernel** (5): debugregisters, etwpatch, kpcrs, timers, unloadedmodules
 - **Desktop/GUI** (3): deskscan, desktops, windowstations
 - **Memory** (2): vadregexscan, shimcachemem
 - **Module** (2): pe_symbols, pedump
@@ -75,6 +77,12 @@ create a category sub-branch, implement one plugin per commit, merge back.
   the remaining 7 malware plugins. This reduces outstanding Malware work
   from 11 → 7 (since these 4 are effectively already implemented under the
   correct names). Total new plugins still 35.
+- **2026-04-13** — Kernel category reduced from 6 → 5.
+  `windows.unhooked_system_calls` is a deprecated `PluginRenameClass`
+  wrapper (`removal_date="2026-06-07"`) for
+  `windows.malware.unhooked_system_calls.UnhookedSystemCalls`, which is
+  already listed in the Malware category. Dropping the Kernel alias avoids
+  the duplicate MCP tool. Total new plugins: 35 → 34.
 
 ---
 
