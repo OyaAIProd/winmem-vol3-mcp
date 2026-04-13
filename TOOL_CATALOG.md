@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-72 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+73 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -154,3 +154,4 @@ for these and will be removed by the Volatility Foundation on 2026-06-07.
 | `windows.malware.ldrmodules` | `windows_malware_ldrmodules` | List loaded modules (detects unlinked DLLs) |
 | `windows.malware.malfind` | `windows_malware_malfind` | Detect potentially injected code in process memory |
 | `windows.malware.skeleton_key_check` | `windows_malware_skeleton_key_check` | Detect Skeleton Key malware |
+| `windows.malware.unhooked_system_calls` | `windows_malware_unhooked_system_calls` | Detect ntdll syscall stub divergence (EDR/unhooking malware) |

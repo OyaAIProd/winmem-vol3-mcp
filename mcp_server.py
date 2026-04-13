@@ -2820,6 +2820,51 @@ def windows_windows() -> dict:
 
 
 @mcp.tool()
+def windows_malware_unhooked_system_calls() -> dict:
+    """
+    Run the malware.unhooked_system_calls plugin to detect ntdll.dll
+    syscall stubs whose prologues differ across processes — the classic
+    signature of EDR / userland-hooking frameworks (and increasingly
+    of unhooking malware that restores stubs from disk to bypass EDR).
+
+    Use this tool when the user asks about:
+    - EDR / antivirus userland hooks on ntdll syscall stubs
+    - Malware unhooking (restoring original ntdll bytes to evade EDR)
+    - Differences between processes' ntdll prologues
+    - Identifying which Nt* / Zw* functions are the most commonly hooked
+    - Detecting AMSI / ETW / hooking-bypass tooling indirectly via
+      stub divergence
+
+    Returns a dict with:
+    - "plugin": "malware.unhooked_system_calls"
+    - "results": list of dicts (one row per syscall function whose
+      first instruction bytes differ across at least two processes):
+        "Function": ntdll syscall name (e.g. ``NtCreateFile``) (str),
+        "Distinct Implementations": comma-separated count of unique
+          prologue byte sequences observed (str),
+        "Total Implementations": total processes inspected (int)
+
+    Forensic context:
+    - All clean processes share an identical syscall stub prologue
+      (mov eax, <syscall#>; syscall; ret on x64). Any function with
+      ``Distinct Implementations`` > 1 means at least one process
+      runs a different prologue — a hook (EDR or malware) or an
+      unhook (malware that overwrote a hook with the original bytes)
+    - Functions touched by EDR commonly include NtCreateFile,
+      NtWriteFile, NtAllocateVirtualMemory, NtProtectVirtualMemory,
+      NtCreateThreadEx, LdrLoadDll, EtwEventWrite — divergence on
+      these in a non-EDR-instrumented system is high-signal malicious
+    - Combine with windows_etwpatch (ETW-stub tampering) and
+      windows_malware_malfind (injected code in suspect VADs) to
+      attribute the divergence to a specific PID
+    - Requires successful PDB symbol download for ntdll at startup;
+      otherwise the plugin cannot map syscall numbers to function
+      names
+    """
+    return session.run_plugin("malware.unhooked_system_calls")
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
