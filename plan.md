@@ -3,28 +3,30 @@
 ## 0. Remaining Plugin Implementation
 
 49 plugins from v2.7.0 are fully integrated. After upgrading to v2.27.0,
-42 new plugins were initially identified. Investigation (2026-04-13) confirmed
-that **4 of these are deprecated wrappers** that redirect to the canonical
-`windows.malware.*` implementations via `deprecation.PluginRenameClass` with
-`removal_date="2026-06-07"` (~55 days away). These deprecated wrappers are
-excluded from the plan to avoid redundant MCP tools and deprecation warnings.
-Effective total: **38 plugins**.
+42 new plugins were initially identified. Investigation revealed **6 of these
+are deprecated `PluginRenameClass` wrappers** that redirect to canonical
+implementations elsewhere. These wrappers are excluded to avoid duplicate
+MCP tools and deprecation warnings. Effective total: **36 plugins**.
 
-Deprecated wrappers dropped from Process category (kept only in Malware):
+Deprecated wrappers dropped (kept only under their canonical path):
 - `windows.suspicious_threads` → canonical `windows.malware.suspicious_threads`
 - `windows.psxview` → canonical `windows.malware.psxview`
 - `windows.hollowprocesses` → canonical `windows.malware.hollowprocesses`
 - `windows.processghosting` → canonical `windows.malware.processghosting`
+- `windows.svcdiff` → canonical `windows.malware.svcdiff`
+  (already in Malware category; Service duplicate dropped)
+- `windows.scheduled_tasks` → canonical `windows.registry.scheduled_tasks`
+  (this deprecated alias is redundant with the registry.* version already
+  in the plan; expose only the canonical path)
 
-New plugins by category (38 total):
+New plugins by category (36 total):
 
 - **Malware** (11): malware.drivermodule, malware.hollowprocesses,
   malware.ldrmodules, malware.malfind, malware.pebmasquerade,
   malware.processghosting, malware.psxview, malware.skeleton_key_check,
   malware.suspicious_threads, malware.svcdiff, malware.unhooked_system_calls
 - **Process** (3): threads, orphan_kernel_threads, suspended_threads
-- **Service** (5): svclist, svcscan, svcdiff, scheduled_tasks,
-  registry.scheduled_tasks
+- **Service** (3): svclist, svcscan, registry.scheduled_tasks
 - **Registry** (3): registry.amcache, registry.getcellroutine, amcache
 - **Kernel** (6): debugregisters, etwpatch, kpcrs, timers,
   unhooked_system_calls, unloadedmodules
@@ -45,6 +47,14 @@ create a category sub-branch, implement one plugin per commit, merge back.
   implementations. Implementing both would create duplicate MCP tools and emit
   deprecation warnings. Canonical versions will be covered in Malware category.
   Total new plugins: 42 → 38.
+- **2026-04-13** — Service category reduced from 5 → 3. `windows.svcdiff` is a
+  deprecated wrapper for `windows.malware.svcdiff` (`removal_date="2026-06-07"`),
+  and that canonical version is already listed in the Malware category — the
+  Service entry would be a duplicate. `windows.scheduled_tasks` is a deprecated
+  wrapper for `windows.registry.scheduled_tasks` (`removal_date="2026-09-25"`),
+  and the registry.* canonical version is already listed in the same Service
+  entry — the alias was a redundant second exposure of the same plugin.
+  Total new plugins: 38 → 36.
 
 ---
 

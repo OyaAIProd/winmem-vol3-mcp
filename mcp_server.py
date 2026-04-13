@@ -1687,6 +1687,60 @@ def windows_registry_certificates() -> dict:
 
 
 @mcp.tool()
+def windows_registry_scheduled_tasks() -> dict:
+    """
+    Run the registry.scheduled_tasks plugin to decode Windows Task
+    Scheduler entries stored in the registry, including triggers,
+    actions, run times, and creation times.
+
+    Use this tool when the user asks about:
+    - Scheduled tasks, Task Scheduler jobs, or at/schtasks artifacts
+    - Persistence mechanisms via the Task Scheduler
+    - Which programs are set to run on a schedule or on event triggers
+    - Creation time / last run time of scheduled tasks
+    - Malware persistence registered as a scheduled task
+
+    Returns a dict with:
+    - "plugin": "registry.scheduled_tasks"
+    - "results": list of dicts, each containing:
+        "Task Name": task name / path (str),
+        "Principal ID": security principal running the task (str),
+        "Display Name": display name of the task (str),
+        "Enabled": whether the task is enabled (bool),
+        "Creation Time": when the task was created (str, UTC),
+        "Last Run Time": when the task last ran (str, UTC),
+        "Last Successful Run Time": last successful run (str, UTC),
+        "Trigger Type": trigger category (Time, Logon, Boot, Event, ...)
+          (str),
+        "Trigger Description": human-readable trigger detail (str),
+        "Action Type": action category (Exec, ComHandler, ...) (str),
+        "Action": executable or handler invoked (str),
+        "Action Arguments": arguments passed to the action (str),
+        "Action Context": security context for the action (str),
+        "Working Directory": working directory used when running (str),
+        "Key Name": registry key name backing the task (str)
+
+    Forensic context:
+    - Scheduled tasks are one of the most common Windows persistence
+      techniques (MITRE ATT&CK T1053.005). Pay special attention to
+      tasks with Trigger Type = Logon or Boot and actions pointing to
+      user-writable paths (AppData, ProgramData, Public)
+    - Creation Time vs Last Run Time reveals freshly created persistence
+      tasks that have already executed — correlate with windows_pslist
+      and process timestamps to link the task to observed activity
+    - Action fields containing LOLBins (powershell.exe, rundll32.exe,
+      mshta.exe, regsvr32.exe) with obfuscated arguments are high-signal
+      persistence indicators
+    - Use the Key Name to locate the full registry entry with
+      windows_registry_printkey for deeper inspection
+    - Cross-reference task creation times against process creation times
+      from windows_pslist to identify the process that registered the
+      task
+    """
+    return session.run_plugin("registry.scheduled_tasks")
+
+
+@mcp.tool()
 def windows_skeleton_key_check() -> dict:
     """
     Run the skeleton_key_check plugin to detect the Skeleton Key malware
@@ -1952,6 +2006,98 @@ def windows_bigpools() -> dict:
       with process activity on the system
     """
     return session.run_plugin("bigpools")
+
+
+@mcp.tool()
+def windows_svcscan() -> dict:
+    """
+    Run the svcscan plugin to enumerate Windows services by scanning the
+    services.exe process memory for service record signatures.
+
+    Use this tool when the user asks about:
+    - Windows services, service configuration, or installed services
+    - Which services are running, stopped, or set to auto-start
+    - Service binaries, service DLLs, or service host mapping
+    - Malicious services used for persistence (e.g., scheduled-boot payload)
+    - Suspicious or unknown services that do not ship with Windows
+
+    Returns a dict with:
+    - "plugin": "svcscan"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the service record (str, hex),
+        "Order": ordinal position within the enumerated set (int),
+        "PID": process ID hosting the service — typically services.exe or
+          a svchost.exe group (int),
+        "Start": start type (Auto / Manual / Disabled / System / Boot) (str),
+        "State": current runtime state (Running / Stopped / Paused / ...)
+          (str),
+        "Type": service type flags (Kernel Driver, Win32 Own Process, etc.)
+          (str),
+        "Name": internal service name (str),
+        "Display": human-readable display name (str),
+        "Binary": resolved service binary path or ServiceMain entrypoint
+          (str),
+        "Binary (Registry)": raw ImagePath value from the registry (str),
+        "Dll": service DLL for svchost-hosted services (str or None)
+
+    Forensic context:
+    - Services configured with Start=Auto whose Binary points to a
+      temp/user-writable path (e.g., AppData, ProgramData) are classic
+      persistence indicators
+    - Cross-reference Binary and Binary (Registry): divergence can indicate
+      service hijacking (registry tampering without restart) or unhooking
+    - Unusual service types (e.g., Kernel Driver pointing to an unsigned
+      or non-standard path) pair with windows_modules and windows_driverscan
+      for further rootkit analysis
+    - Correlate the PID column against windows_pslist to identify the
+      hosting svchost.exe group, then chain to windows_dlllist to inspect
+      loaded service DLLs
+    - Compare with windows_svclist (when available) to spot list/scan
+      discrepancies — a service present here but not in svclist suggests
+      DKOM/unlinking of the service record
+    """
+    return session.run_plugin("svcscan")
+
+
+@mcp.tool()
+def windows_svclist() -> dict:
+    """
+    Run the svclist plugin to enumerate Windows services by walking the
+    services.exe doubly linked list of service records (list-based view,
+    as opposed to svcscan's signature scan).
+
+    Use this tool when the user asks about:
+    - The canonical list of services currently registered with SCM
+    - Running services in their linked order
+    - A list-walk view of services for comparison against svcscan results
+    - Detection of hidden services via list/scan discrepancy
+    - Persistence mechanisms registered with the Service Control Manager
+
+    Important: this plugin supports only 64-bit Windows 10 build 15063 and
+    later. On older Windows 7 / 8 / 8.1 or 32-bit samples it will log a
+    warning and return an empty result — use windows_svcscan instead.
+
+    Returns a dict with:
+    - "plugin": "svclist"
+    - "results": list of dicts with the same schema as windows_svcscan:
+        "Offset", "Order", "PID", "Start", "State", "Type", "Name",
+        "Display", "Binary", "Binary (Registry)", "Dll"
+
+    Forensic context:
+    - svclist walks the in-memory linked list of service records used by
+      SCM, while svcscan discovers records by signature scanning — any
+      service present in svcscan but missing from svclist is a strong
+      rootkit / DKOM indicator (the record was unlinked from SCM's list
+      but still lives in memory)
+    - Use the two tools together: run windows_svcscan and windows_svclist,
+      then diff the Name column. This is the logic the deprecated
+      windows.svcdiff wrapper (canonical: windows.malware.svcdiff)
+      performs internally
+    - If svclist returns empty on a supported OS, the services.exe VAD
+      scan failed — investigate process integrity with windows_pslist
+      and windows_malfind for PID of services.exe
+    """
+    return session.run_plugin("svclist")
 
 
 if __name__ == "__main__":
