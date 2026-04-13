@@ -2697,5 +2697,47 @@ def windows_windowstations() -> dict:
     return session.run_plugin("windowstations")
 
 
+@mcp.tool()
+def windows_desktops() -> dict:
+    """
+    Run the desktops plugin to enumerate every ``tagDESKTOP`` object by
+    walking the Desktop linked list of each Window Station, and the
+    process threads attached to each desktop.
+
+    Use this tool when the user asks about:
+    - Desktops attached to a Window Station / interactive session
+    - Which processes hold a thread on the interactive desktop (Default,
+      Winlogon, Disconnect)
+    - Mapping a process to its GUI desktop context
+    - GUI subsystem state for the logged-on user
+    - Detection of unusual / hidden desktops registered by malware
+
+    Returns a dict with:
+    - "plugin": "desktops"
+    - "results": list of dicts (one row per (desktop, attached process)
+      pair), each containing:
+        "Offset": virtual address of the _tagDESKTOP object (str, hex),
+        "Window Station": parent WindowStation name (e.g. ``WinSta0``,
+          ``Service-0x0-3e7$``) (str),
+        "Session": session ID hosting the desktop (int),
+        "Desktop": desktop name (e.g. ``Default``, ``Winlogon``,
+          ``Disconnect``) (str),
+        "Process": image name of a process attached to this desktop (str),
+        "PID": that process's ID (int)
+
+    Forensic context:
+    - Desktops named other than ``Default`` / ``Winlogon`` / ``Disconnect``
+      can indicate sandbox-evasion or stealth GUI execution; cross
+      reference with windows_pslist to see whether the owning process is
+      legitimate
+    - Compare with windows_deskscan results: rows in deskscan that don't
+      appear here suggest unlinked / hidden desktops (object exists but
+      isn't on the parent station's list)
+    - Use Session column to confirm whether activity is in an interactive
+      logon session vs SYSTEM service space
+    """
+    return session.run_plugin("desktops")
+
+
 if __name__ == "__main__":
     mcp.run()

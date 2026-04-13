@@ -18,6 +18,13 @@ def run_windowstations(session: Session) -> dict:
     return {"plugin": "windowstations", "results": parse_treegrid(treegrid)}
 
 
+def run_desktops(session: Session) -> dict:
+    """Run windows.desktops and return desktops walked from each WindowStation."""
+    treegrid = run_plugin(session, desktops.Desktops)
+    return {"plugin": "desktops", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
+    "desktops": run_desktops,
     "windowstations": run_windowstations,
 }

@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-67 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+68 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -113,6 +113,7 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 | Volatility3 Plugin | MCP Tool Name | Description |
 |---|---|---|
 | `windows.windowstations` | `windows_windowstations` | Enumerate tagWINDOWSTATION objects per session |
+| `windows.desktops` | `windows_desktops` | Walk per-WindowStation desktop list with attached threads |
 
 ## System Information
 
