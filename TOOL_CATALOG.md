@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-77 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+78 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -159,3 +159,4 @@ for these and will be removed by the Volatility Foundation on 2026-06-07.
 | `windows.malware.processghosting` | `windows_malware_processghosting` | Detect Process Ghosting (DeletePending / DeleteOnClose images) |
 | `windows.malware.hollowprocesses` | `windows_malware_hollowprocesses(pid=0)` | Detect Process Hollowing (image-base mismatch / VAD anomalies) |
 | `windows.malware.pebmasquerade` | `windows_malware_pebmasquerade(pid=0)` | Detect PEB ImageFilePath / CommandLine spoofing |
+| `windows.malware.suspicious_threads` | `windows_malware_suspicious_threads(pid=0)` | Flag userland threads starting in non-image / RWX VADs (injection) |

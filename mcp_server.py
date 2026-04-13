@@ -3026,6 +3026,54 @@ def windows_malware_pebmasquerade(pid: int = 0) -> dict:
 
 
 @mcp.tool()
+def windows_malware_suspicious_threads(pid: int = 0) -> dict:
+    """
+    Run the malware.suspicious_threads plugin to surface userland
+    threads whose start address falls inside an anomalous VAD —
+    typically a non-image, non-mapped, RWX region — which is the
+    canonical signature of code injection.
+
+    Use this tool when the user asks about:
+    - Code-injection detection (CreateRemoteThread, NtQueueApcThread,
+      etc.)
+    - Threads running from unbacked / non-image memory
+    - Suspicious thread analysis beyond what windows_threads surfaces
+    - Quick triage for any process suspected of containing shellcode
+
+    Arguments:
+    - pid (optional, default 0): restrict to one process. 0 inspects
+      every userland process.
+
+    Returns a dict with:
+    - "plugin": "malware.suspicious_threads"
+    - "results": list of dicts (one row per anomalous thread):
+        "Process": process image name (str),
+        "PID": process ID (int),
+        "TID": thread ID (int),
+        "Context": thread context summary (str),
+        "Address": thread start address (str, hex),
+        "VAD Path": path of the VAD backing the start address, or
+          "" / None when the VAD has no associated file (the
+          high-signal case) (str),
+        "Note": human-readable explanation of why the thread was
+          flagged (str)
+
+    Forensic context:
+    - Rows where ``VAD Path`` is empty / None mean the thread is
+      executing from memory not backed by any module — almost
+      certainly injected shellcode
+    - Pair with windows_malware_malfind on the same PID to see the
+      injected memory region's bytes, then windows_pedump to recover
+      it for offline analysis
+    - Cross-reference with windows_suspended_threads: if the
+      suspicious thread is also suspended, the injection is
+      mid-staging (Process Hollowing or remote thread injection
+      paused before resume)
+    """
+    return session.run_plugin("malware.suspicious_threads", pid=pid)
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
