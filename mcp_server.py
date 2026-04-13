@@ -1741,6 +1741,48 @@ def windows_registry_scheduled_tasks() -> dict:
 
 
 @mcp.tool()
+def windows_registry_getcellroutine() -> dict:
+    """
+    Run the registry.getcellroutine plugin to detect registry hives whose
+    GetCellRoutine function pointer has been hooked to point outside the
+    kernel (ntoskrnl) — a registry rootkit indicator.
+
+    Use this tool when the user asks about:
+    - Registry rootkits or hooked registry access paths
+    - Hidden registry keys that cannot be read via standard hive traversal
+    - Kernel-mode tampering of the registry subsystem
+    - Signs of registry filter drivers or offensive registry toolkits
+    - Integrity check of registry hive access routines
+
+    Returns a dict with:
+    - "plugin": "registry.getcellroutine"
+    - "results": list of dicts, each containing:
+        "Hive Offset": virtual offset of the _CMHIVE structure (str, hex),
+        "Hive Name": hive path / name such as \\REGISTRY\\MACHINE\\SYSTEM (str),
+        "GetCellRoutine Module": module owning the hooked handler, or None
+          if the handler does not resolve to any known module (str or None),
+        "GetCellRoutine Handler": virtual address of the handler (str, hex)
+
+    Forensic context:
+    - Every registry hive stores a GetCellRoutine callback used to translate
+      a cell index into a memory pointer. Legitimately this always resolves
+      inside the Windows kernel. Any non-kernel module (or unresolved
+      address) is malicious — the plugin's logic only yields hooked hives
+    - A non-None GetCellRoutine Module that is not ntoskrnl indicates a
+      driver has replaced the handler to intercept or filter registry reads
+      (used by rootkits to hide keys/values from hivelist / printkey)
+    - An unresolved handler (GetCellRoutine Module = None) means the hook
+      points into unbacked memory — likely manually-mapped rootkit code;
+      combine with windows_modscan and windows_orphan_kernel_threads to
+      locate the owning driver
+    - Pair with windows_registry_hivelist to confirm the hive is otherwise
+      accessible, and windows_registry_printkey to attempt reading keys via
+      the potentially hooked path
+    """
+    return session.run_plugin("registry.getcellroutine")
+
+
+@mcp.tool()
 def windows_skeleton_key_check() -> dict:
     """
     Run the skeleton_key_check plugin to detect the Skeleton Key malware

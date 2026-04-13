@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows.registry import certificates, hivelist, hivescan, printkey, scheduled_tasks, userassist
+from volatility3.plugins.windows.registry import certificates, getcellroutine, hivelist, hivescan, printkey, scheduled_tasks, userassist
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -48,8 +48,15 @@ def run_scheduled_tasks(session: Session) -> dict:
     return {"plugin": "registry.scheduled_tasks", "results": parse_treegrid(treegrid)}
 
 
+def run_getcellroutine(session: Session) -> dict:
+    """Run windows.registry.getcellroutine and return hives with hooked GetCellRoutine handlers."""
+    treegrid = run_plugin(session, getcellroutine.GetCellRoutine)
+    return {"plugin": "registry.getcellroutine", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "registry.certificates": run_certificates,
+    "registry.getcellroutine": run_getcellroutine,
     "registry.hivelist": run_hivelist,
     "registry.hivescan": run_hivescan,
     "registry.printkey": run_printkey,
