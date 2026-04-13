@@ -2983,6 +2983,49 @@ def windows_malware_hollowprocesses(pid: int = 0) -> dict:
 
 
 @mcp.tool()
+def windows_malware_pebmasquerade(pid: int = 0) -> dict:
+    """
+    Run the malware.pebmasquerade plugin to detect PEB Masquerading —
+    where a process spoofs its PEB ImageFilePath / CommandLine fields
+    to disguise itself as a legitimate executable.
+
+    Use this tool when the user asks about:
+    - PEB masquerading / PEB spoofing detection
+    - Discrepancies between EPROCESS.ImageFileName and PEB.ImageFilePath
+    - Processes whose command line was rewritten after launch
+    - Anti-forensic process renaming techniques
+
+    Arguments:
+    - pid (optional, default 0): restrict the scan to a single process.
+
+    Returns a dict with:
+    - "plugin": "malware.pebmasquerade"
+    - "results": list of dicts (one row per process):
+        "PID": process ID (int),
+        "EPROCESS_ImageFileName": short image name from EPROCESS (str),
+        "EPROCESS_SeAudit_ImageFileName": full path from SeAuditProcess
+          information (str),
+        "PEB_ImageFilePath": process's own PEB-reported image path (str),
+        "PEB_ImageFilePath_Spoofed": True if PEB image path disagrees
+          with kernel-side records (bool),
+        "PEB_CommandLine_Spoofed": True if the PEB command line was
+          rewritten after process creation (bool)
+
+    Forensic context:
+    - Either Spoofed flag = True is high-signal: the process is lying
+      about what it is. Common with hollowing or doppelganging
+    - Many EDR rules and analyst tooling read the PEB; spoofing it
+      defeats those checks while EPROCESS.ImageFileName (kernel-only)
+      still tells the truth — which is exactly what this plugin
+      compares
+    - Pair with windows_malware_hollowprocesses (often co-occurs) and
+      windows_pedump on the suspect PID to capture the actually-running
+      image for static analysis
+    """
+    return session.run_plugin("malware.pebmasquerade", pid=pid)
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
