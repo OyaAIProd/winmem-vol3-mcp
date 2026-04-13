@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, orphan_kernel_threads, privileges, pslist, psscan, pstree, sessions, thrdscan, threads
+from volatility3.plugins.windows import cmdline, envars, getsids, handles, joblinks, orphan_kernel_threads, privileges, pslist, psscan, pstree, sessions, suspended_threads, thrdscan, threads
 
 from plugins._common import _serialize_value, parse_treegrid, run_plugin
 
@@ -97,6 +97,12 @@ def run_orphan_kernel_threads(session: Session) -> dict:
     return {"plugin": "orphan_kernel_threads", "results": parse_treegrid(treegrid)}
 
 
+def run_suspended_threads(session: Session) -> dict:
+    """Run windows.suspended_threads and return userland threads left in a suspended state."""
+    treegrid = run_plugin(session, suspended_threads.SuspendedThreads)
+    return {"plugin": "suspended_threads", "results": parse_treegrid(treegrid)}
+
+
 def run_sessions(session: Session) -> dict:
     """Run windows.sessions and return processes with session information."""
     treegrid = run_plugin(session, sessions.Sessions)
@@ -114,6 +120,7 @@ PLUGIN_MAP = {
     "thrdscan": run_thrdscan,
     "threads": run_threads,
     "orphan_kernel_threads": run_orphan_kernel_threads,
+    "suspended_threads": run_suspended_threads,
     "pslist": run_pslist,
     "psscan": run_psscan,
     "pstree": run_pstree,

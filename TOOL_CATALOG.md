@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-51 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+52 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -106,3 +106,4 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.mbrscan` | `windows_mbrscan` | Scan for Master Boot Records |
 | `windows.truecrypt` | `windows_truecrypt` | Find TrueCrypt cached passphrases |
 | `windows.getservicesids` | `windows_getservicesids` | List process token service SIDs |
+| `windows.suspended_threads` | `windows_suspended_threads` | Detect never-resumed suspended threads (hollowing / EDR evasion) |

@@ -555,6 +555,54 @@ def windows_orphan_kernel_threads() -> dict:
 
 
 @mcp.tool()
+def windows_suspended_threads() -> dict:
+    """
+    Run the suspended_threads plugin to find userland threads whose
+    SuspendCount is greater than zero and were never resumed.
+
+    Use this tool when the user asks about:
+    - Process hollowing, process doppelgänging, or EDR evasion indicators
+    - Threads left in a suspended state (never resumed)
+    - Signs of thread injection paused before execution
+    - Anomalies relating to CreateProcess with CREATE_SUSPENDED
+    - Detection of techniques described in the Volexity DEF CON 2024 paper
+
+    Returns a dict with:
+    - "plugin": "suspended_threads"
+    - "results": list of dicts, each containing:
+        "Process": owning process image name (str),
+        "PID": process ID (int),
+        "TID": thread ID (int),
+        "StartFile": file path containing the thread start address
+          (str or None),
+        "StartSymbol": symbol at the thread start address (str or None),
+        "StartAddress": thread start address (str, hex),
+        "Win32StartFile": file path containing the Win32 start address
+          (str or None),
+        "Win32StartSymbol": symbol at the Win32 start address (str or None),
+        "Win32StartAddress": Win32 thread start address (str, hex)
+
+    Forensic context:
+    - Legitimate code routinely creates threads suspended then resumes them;
+      this plugin surfaces only threads still suspended at acquisition time,
+      which is unusual and correlates strongly with hollowing / evasion
+    - Suspended threads whose StartFile or Win32StartFile is None (start
+      address outside any mapped module) indicate code running from an
+      injected memory region — pair with windows_malfind to confirm
+    - The process hollowing pattern pairs a suspended main thread with an
+      overwritten image base; correlate this plugin with windows_pslist
+      and windows_dlllist to see whether the process's backing image has
+      been swapped
+    - If the suspended thread's PID also appears in windows_malfind or its
+      Win32StartAddress points into a VAD with RWX protection, escalate —
+      this is a classic hollowing signature
+    - `WorkFoldersShell.dll` is filtered out by the plugin as a known false
+      positive, so any result here is after de-noising
+    """
+    return session.run_plugin("suspended_threads")
+
+
+@mcp.tool()
 def windows_malfind() -> dict:
     """
     Run the malfind plugin to detect process memory regions that potentially
