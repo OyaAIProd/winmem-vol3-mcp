@@ -2826,5 +2826,40 @@ def windows_consoles(no_registry: bool = False) -> dict:
     return session.run_plugin("consoles", no_registry=no_registry)
 
 
+@mcp.tool()
+def windows_cmdscan(no_registry: bool = False) -> dict:
+    """
+    Run the cmdscan plugin to extract typed command history from the
+    Console Host. This is the focused subset of windows_consoles — only
+    the History property rows.
+
+    Use this tool when the user asks about:
+    - Specifically the commands a user typed (not screen output)
+    - cmd.exe / PowerShell command history recovered from memory
+    - Reconstructing a typed-command timeline for incident response
+    - Quick "what did they run?" question without full console scrollback
+
+    Arguments:
+    - no_registry (optional, default False): same as windows_consoles —
+      skip registry-based console lookup if needed.
+
+    Returns a dict with the same schema as windows_consoles
+    (PID, Process, ConsoleInfo, Property, Address, Data) but limited to
+    history-related properties. The Data column contains each typed
+    command line as the user entered it.
+
+    Forensic context:
+    - When you only need the "what did they type" answer, this is faster
+      and cleaner than parsing the full windows_consoles output
+    - Pair with windows_pslist creation timestamps to determine
+      *approximately when* each command was issued (the cmd that ran
+      typed-command appears in pslist as a child of cmd.exe / pwsh.exe)
+    - Empty result while windows_consoles also returns no conhost.exe
+      rows is expected on systems whose interactive shells ran inside
+      csrss.exe (older Windows / no conhost split)
+    """
+    return session.run_plugin("cmdscan", no_registry=no_registry)
+
+
 if __name__ == "__main__":
     mcp.run()

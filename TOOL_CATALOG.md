@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-70 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+71 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -121,6 +121,7 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 | Volatility3 Plugin | MCP Tool Name | Description |
 |---|---|---|
 | `windows.consoles` | `windows_consoles(no_registry=False)` | Recover console host buffers + command history |
+| `windows.cmdscan` | `windows_cmdscan(no_registry=False)` | Focused command-history extraction from console hosts |
 
 ## System Information
 
