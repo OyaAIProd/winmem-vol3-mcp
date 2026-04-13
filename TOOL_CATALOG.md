@@ -1,7 +1,8 @@
 # Volatility3 Windows Plugin Catalog
 
-79 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
-as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
+All 79 non-deprecated Windows plugins from volatility3 v2.27.0 are
+integrated as MCP tools. The 8 deprecated `PluginRenameClass` wrappers
+intentionally excluded are documented in `plan.md`.
 
 ## Naming Convention
 
@@ -10,6 +11,43 @@ Format: `windows_{plugin_name}` (e.g., `windows.pslist` -> `windows_pslist`).
 Sub-namespace plugins follow `windows_{namespace}_{name}`:
 - `windows.registry.*` -> `windows_registry_{name}`
 - `windows.malware.*` -> `windows_malware_{name}`
+
+## OS Compatibility Notes
+
+Most plugins work across the full Windows range supported by volatility3.
+The table below flags only those with **hard restrictions** (refuses to
+produce data on incompatible images), **implicit OS dependencies**
+(structurally runs but only yields data above a threshold version), or
+**version-aware adapters** worth knowing about for output interpretation.
+
+### Hard restrictions
+
+| MCP Tool | Constraint | Behaviour on incompatible images |
+|---|---|---|
+| `windows_svclist` | Win10 build 15063+ on **64-bit** only | Logs `"This plugin only supports Windows 10 version 15063+ 64bit"` and returns an empty list |
+| `windows_malware_svcdiff` | Same as `windows_svclist` (depends on it) | Same as above |
+| `windows_malware_processghosting` | Win10+ only (requires `_EPROCESS.ImageFilePointer`, introduced in Win10) | Logs `"ImageFilePointer checks are only supported on Windows 10+ builds"` and returns an empty list |
+
+### Implicit OS dependencies
+
+| MCP Tool | When data is available |
+|---|---|
+| `windows_consoles`, `windows_cmdscan` | Requires `conhost.exe` to be running. On pre-Win7 / Win7 RTM where consoles ran inside `csrss.exe` there is no `conhost.exe` → returns empty (`"No conhost.exe processes found"`). |
+| `windows_registry_amcache` | The `AmCache.hve` hive only populates application/driver records from **Windows 8 onward**. Win7 typically returns 0 rows. |
+
+### Version-aware adapters (works everywhere, output may vary)
+
+| MCP Tool | Adaptation notes |
+|---|---|
+| `windows_shimcachemem` | Format differs between Win7 and Win8+. The `Last Update` and `Exec Flag` columns populate only on 32-bit Win7 / Win8 / Win8.1; elsewhere they are `None`. |
+| `windows_netscan` | Different parser branch on Win10 build 18363+ (introduces a new `_TCP_LISTENER` layout). |
+| `windows_svcscan` | Adapts the service record signature across Win8+, Win10 builds 16299 / 17763 / 18362 / 19041 / 25398. Functional across the entire range. |
+| `windows_timers`, `windows_poolscanner` | Different scan path on Win8+ vs older. |
+| `windows_windowstations` | Adapts across Win8 and many Win10 builds (10586 / 15063 / 16299 / 17134 / 17763 / 18362 / 19041 / 19577). |
+
+For everything else, no version gating is applied — the underlying
+volatility3 plugin handles structural variation transparently or the
+artifact is universal across supported Windows versions.
 
 ---
 
