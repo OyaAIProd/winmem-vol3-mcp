@@ -14,8 +14,13 @@ if not IMAGE_PATH or not os.path.isfile(IMAGE_PATH):
     )
     sys.exit(1)
 
+# Optional on-disk directory for dump plugins (dumpfiles, pedump, ...). When
+# unset, calling any dump tool will raise with a clear message. When set,
+# binary extractions land in this directory; it is created on first use.
+DUMP_DIR = os.environ.get("VOL_DUMP_DIR", "")
+
 mcp = FastMCP("winmem-vol3-mcp")
-session = Session(IMAGE_PATH)
+session = Session(IMAGE_PATH, dump_dir=DUMP_DIR)
 
 
 @mcp.tool()
@@ -1508,37 +1513,64 @@ def windows_filescan() -> dict:
 
 
 @mcp.tool()
-def windows_dumpfiles() -> dict:
+def windows_dumpfiles(
+    pid: int = 0,
+    filter: str = "",
+    filter_ignore_case: bool = False,
+    virtaddr: int = 0,
+    physaddr: int = 0,
+) -> dict:
     """
-    Run the dumpfiles plugin to extract cached file contents from memory,
-    returning metadata about recoverable files.
+    Run the dumpfiles plugin to recover cached file contents from memory
+    and write the recovered bytes to the directory configured via the
+    ``VOL_DUMP_DIR`` environment variable.
 
     Use this tool when the user asks about:
-    - Extracting or recovering files from the memory image
-    - Cached file contents still resident in memory
-    - Dumping specific files by address or for a given process
-    - Recovering deleted or in-use files from memory
-    - File content extraction for forensic evidence
+    - Extracting or recovering a specific file from the memory image
+    - Dumping files opened by a specific process (pass the PID)
+    - Recovering deleted or in-use files whose content is still cached
+    - Pulling a configuration / document / PE from a suspicious process
+    - Saving forensic evidence to disk for external analysis
+
+    Arguments (all optional — pass ``0`` / ``""`` to leave unset; the
+    defaults dump every file object volatility3 finds, which can be slow
+    and produce many files):
+    - pid: restrict to files opened by this process ID (int)
+    - filter: regex applied to the recovered file's name (str)
+    - filter_ignore_case: make ``filter`` case-insensitive (bool)
+    - virtaddr: virtual address of a specific _FILE_OBJECT (int)
+    - physaddr: physical address of a specific _FILE_OBJECT (int)
 
     Returns a dict with:
     - "plugin": "dumpfiles"
     - "results": list of dicts, each containing:
         "Cache": cache type such as SharedCacheMap or DataSectionObject (str),
-        "FileObject": address of the FILE_OBJECT (str, hex),
+        "FileObject": address of the _FILE_OBJECT (str, hex),
         "FileName": path of the cached file (str),
-        "Result": dump status or output file path (str)
+        "Result": final on-disk path of the dumped bytes or an error string
 
     Forensic context:
-    - File dumps are currently metadata-only; actual file extraction to disk
-      requires a configured output directory (planned future enhancement)
-    - SharedCacheMap entries represent files actively cached by the OS,
-      while DataSectionObject entries are memory-mapped file sections
-    - Use windows_filescan to first identify files of interest, then this
-      tool to attempt recovery of their contents
+    - The server must be launched with ``VOL_DUMP_DIR`` set (see
+      ``claude_desktop_config.json``); otherwise this tool raises a clear
+      error. Dumped bytes land in that directory; filename collisions are
+      resolved by appending ``-1``, ``-2``, ...
+    - Prefer passing a ``pid`` or ``filter`` — a bare call can extract
+      hundreds or thousands of cached files
+    - Use windows_filescan first to pick targets by FILE_OBJECT address,
+      then pass that value as ``virtaddr`` / ``physaddr`` for a precise dump
+    - SharedCacheMap entries represent files actively cached by the OS;
+      DataSectionObject entries are memory-mapped file sections (EXE/DLL)
     - Cross-reference with windows_handles to identify which process had
       the file open at the time of capture
     """
-    return session.run_plugin("dumpfiles")
+    return session.run_plugin(
+        "dumpfiles",
+        pid=pid,
+        filter=filter,
+        filter_ignore_case=filter_ignore_case,
+        virtaddr=virtaddr,
+        physaddr=physaddr,
+    )
 
 
 @mcp.tool()

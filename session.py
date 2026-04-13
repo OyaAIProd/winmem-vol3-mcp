@@ -6,12 +6,20 @@ from pathlib import Path
 from volatility3.framework import contexts, interfaces
 from volatility3.framework.interfaces.configuration import HierarchicalDict, path_join
 from plugins import PLUGIN_MAP, BASE_CONFIG_PATH
+from plugins._file_handler import make_file_handler
 
 
 class Session:
-    """Single-image analysis session with config caching."""
+    """Single-image analysis session with config caching.
 
-    def __init__(self, image_path: str):
+    dump_dir: optional on-disk directory for dump plugins (dumpfiles,
+        pedump, ...). When set, a FileHandler bound to this path is
+        exposed via ``self.file_handler`` and can be passed to
+        ``run_plugin(open_method=...)``. When unset, accessing
+        ``file_handler`` raises so the caller surfaces a clear error.
+    """
+
+    def __init__(self, image_path: str, dump_dir: str = ""):
         self.image_path = image_path
         self.ctx = contexts.Context()
         # Cache key is either the plugin name (zero-arg tools) or a
@@ -20,7 +28,24 @@ class Session:
         self._cache: dict = {}
         self._config_path = Path(image_path + ".vol3cfg.json")
         self._saved_config: dict | None = None
+        self.dump_dir = dump_dir
+        self._file_handler = make_file_handler(dump_dir) if dump_dir else None
         self._init_context()
+
+    @property
+    def file_handler(self):
+        """FileHandler class bound to ``dump_dir`` for use with dump plugins.
+
+        Raises RuntimeError if ``VOL_DUMP_DIR`` was not set when the server
+        started, so the Claude-visible MCP tool can return a clear message.
+        """
+        if self._file_handler is None:
+            raise RuntimeError(
+                "VOL_DUMP_DIR is not configured. Set the VOL_DUMP_DIR "
+                "environment variable in claude_desktop_config.json to "
+                "an existing directory before calling any dump tool."
+            )
+        return self._file_handler
 
     def _init_context(self):
         uri = Path(self.image_path).resolve().as_uri()

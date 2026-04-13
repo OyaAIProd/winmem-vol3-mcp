@@ -18,9 +18,45 @@ def run_filescan(session: Session) -> dict:
     return {"plugin": "filescan", "results": parse_treegrid(treegrid)}
 
 
-def run_dumpfiles(session: Session) -> dict:
-    """Run windows.dumpfiles and return cached file dump metadata."""
-    treegrid = run_plugin(session, dumpfiles.DumpFiles)
+def run_dumpfiles(
+    session: Session,
+    pid: int = 0,
+    filter: str = "",
+    filter_ignore_case: bool = False,
+    virtaddr: int = 0,
+    physaddr: int = 0,
+) -> dict:
+    """Run windows.dumpfiles and write cached file contents to VOL_DUMP_DIR.
+
+    Parameters mirror the volatility3 CLI flags (all optional):
+      pid               --pid                filter to one process
+      filter            --filter             regex filter on filename
+      filter_ignore_case --ignore-case       case-insensitive filter
+      virtaddr          --virtaddr           specific virtual address
+      physaddr          --physaddr           specific physical address
+
+    Passing ``0`` / ``""`` means the flag is left unset. Dumped bytes land
+    in ``VOL_DUMP_DIR`` via ``session.file_handler``; the returned
+    ``Result`` column contains the final on-disk path.
+    """
+    extra: dict = {}
+    if pid:
+        extra["pid"] = pid
+    if filter:
+        extra["filter"] = filter
+    if filter_ignore_case:
+        extra["ignore-case"] = True
+    if virtaddr:
+        extra["virtaddr"] = [virtaddr]
+    if physaddr:
+        extra["physaddr"] = [physaddr]
+
+    treegrid = run_plugin(
+        session,
+        dumpfiles.DumpFiles,
+        extra_config=extra or None,
+        open_method=session.file_handler,
+    )
     return {"plugin": "dumpfiles", "results": parse_treegrid(treegrid)}
 
 

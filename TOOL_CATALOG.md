@@ -77,7 +77,7 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 | Volatility3 Plugin | MCP Tool Name | Description |
 |---|---|---|
 | `windows.filescan` | `windows_filescan` | Scan for file objects |
-| `windows.dumpfiles` | `windows_dumpfiles` | Dump cached file contents |
+| `windows.dumpfiles` | `windows_dumpfiles(pid, filter, filter_ignore_case, virtaddr, physaddr)` | Dump cached file contents to VOL_DUMP_DIR (parameterized) |
 | `windows.symlinkscan` | `windows_symlinkscan` | Scan for symbolic links |
 | `windows.mutantscan` | `windows_mutantscan` | Scan for mutexes |
 

@@ -40,7 +40,8 @@ Add the following to your `claude_desktop_config.json`:
       "command": "uv",
       "args": ["--directory", "/absolute/path/to/winmem-vol3-mcp", "run", "python", "mcp_server.py"],
       "env": {
-        "VOL_IMAGE_PATH": "/absolute/path/to/memory.vmem"
+        "VOL_IMAGE_PATH": "/absolute/path/to/memory.vmem",
+        "VOL_DUMP_DIR": "/absolute/path/to/dumps"
       }
     }
   }
@@ -48,6 +49,8 @@ Add the following to your `claude_desktop_config.json`:
 ```
 
 `VOL_IMAGE_PATH` must point to an existing Windows memory image file. The server will not start without it.
+
+`VOL_DUMP_DIR` is optional. When set, dump tools such as `windows_dumpfiles` write recovered bytes into this directory (it is created on first use, and filename collisions are resolved by appending `-1`, `-2`, ...). When unset, calling any dump tool raises a clear error so Claude can ask the user to configure it.
 
 ### Quick Test
 
