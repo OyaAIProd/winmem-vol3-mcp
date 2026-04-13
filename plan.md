@@ -1,5 +1,24 @@
 # Volatility3 MCP Server — Development Plan
 
+## Resume here (next session entry point)
+
+Plugin-coverage work (Section 0) is **complete** as of 2026-04-13.
+The next milestone is research-grade work for the DFRWS paper. Pick
+up at the section that matches your current focus:
+
+1. **Cross-plugin Correlation Tools** — start here for the highest-impact
+   research contribution (Section 1).
+2. **Evaluation Framework** — required for paper acceptance (Section 2).
+3. **Forensic Report Generation** — analyst-facing deliverable (Section 3).
+4. **Performance Optimization** — scale-dependent polish (Section 4).
+
+Recommended first sub-task: implement `detect_hidden_processes`
+(pslist vs psscan diff) in Section 1 — small, demonstrates the
+correlation-tool pattern, and exercises the existing
+`session.run_plugin()` cache.
+
+---
+
 ## 0. Remaining Plugin Implementation
 
 **Status (2026-04-13): COMPLETE.** All 79 non-deprecated Windows plugins
