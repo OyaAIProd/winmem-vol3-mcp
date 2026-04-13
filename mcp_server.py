@@ -2429,6 +2429,51 @@ def windows_unloadedmodules() -> dict:
 
 
 @mcp.tool()
+def windows_timers() -> dict:
+    """
+    Run the timers plugin to enumerate every kernel-level DPC timer
+    registered on each CPU and resolve its routine address to the owning
+    module/symbol.
+
+    Use this tool when the user asks about:
+    - Kernel timers / DPC routines scheduled on the system
+    - Timer-based rootkit persistence (repeating DPCs that hook kernel work)
+    - Which driver owns a particular timer callback
+    - Suspiciously short-period timers that keep malicious code alive
+    - Callbacks whose routine address doesn't resolve to any module
+
+    Returns a dict with:
+    - "plugin": "timers"
+    - "results": list of dicts, each containing:
+        "Offset": virtual address of the _KTIMER structure (str, hex),
+        "DueTime": 100-nanosecond absolute time the timer is due (str),
+        "Period(ms)": periodic interval in milliseconds; 0 means one-shot
+          (int),
+        "Signaled": whether the timer is currently signaled (str),
+        "Routine": address of the DPC routine that fires when the timer
+          expires (str, hex),
+        "Module": module that owns the Routine address, or None if the
+          address does not map to any loaded module (str or None),
+        "Symbol": symbol name at Routine, when resolvable (str or None)
+
+    Forensic context:
+    - Timers whose ``Module`` is None / UNKNOWN are the highest-signal
+      rows: a DPC firing from unbacked memory is almost certainly
+      rootkit-injected kernel code
+    - Unexpectedly short ``Period(ms)`` values on timers owned by
+      non-standard modules (e.g. <= 100 ms on a driver nobody loaded)
+      is a persistence pattern — the routine keeps re-waking to
+      maintain hooks or heartbeats
+    - Cross-reference ``Module`` against windows_modscan and
+      windows_unloadedmodules: a timer pointing into an unloaded or
+      unlinked module is a load-and-unload rootkit indicator
+    - Use windows_pe_symbols to reverse-resolve the ``Routine`` address
+      when ``Symbol`` is empty but you recognise the ``Module``
+    """
+    return session.run_plugin("timers")
+
+
+@mcp.tool()
 def windows_svcscan() -> dict:
     """
     Run the svcscan plugin to enumerate Windows services by scanning the

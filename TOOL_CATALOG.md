@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-63 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+64 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -75,6 +75,7 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 | `windows.orphan_kernel_threads` | `windows_orphan_kernel_threads` | Detect kernel threads not mapped to any module (rootkit indicator) |
 | `windows.kpcrs` | `windows_kpcrs` | List per-CPU KPCR and PRCB offsets |
 | `windows.unloadedmodules` | `windows_unloadedmodules` | List recently-unloaded kernel drivers from MmUnloadedDrivers |
+| `windows.timers` | `windows_timers` | Enumerate kernel DPC timers and resolve their routine addresses |
 
 ## File Analysis
 

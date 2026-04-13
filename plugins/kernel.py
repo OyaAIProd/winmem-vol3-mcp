@@ -66,6 +66,12 @@ def run_unloadedmodules(session: Session) -> dict:
     return {"plugin": "unloadedmodules", "results": parse_treegrid(treegrid)}
 
 
+def run_timers(session: Session) -> dict:
+    """Run windows.timers and return registered kernel DPC timers."""
+    treegrid = run_plugin(session, timers.Timers)
+    return {"plugin": "timers", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "bigpools": run_bigpools,
     "callbacks": run_callbacks,
@@ -75,5 +81,6 @@ PLUGIN_MAP = {
     "kpcrs": run_kpcrs,
     "poolscanner": run_poolscanner,
     "ssdt": run_ssdt,
+    "timers": run_timers,
     "unloadedmodules": run_unloadedmodules,
 }
