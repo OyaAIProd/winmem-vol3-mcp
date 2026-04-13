@@ -3074,6 +3074,54 @@ def windows_malware_suspicious_threads(pid: int = 0) -> dict:
 
 
 @mcp.tool()
+def windows_malware_psxview(physical_offsets: bool = False) -> dict:
+    """
+    Run the malware.psxview plugin (the canonical psxview, "The Art of
+    Memory Forensics" cross-view technique) to compare four independent
+    process-enumeration sources and surface processes that show up in
+    some but not others — a generalized hidden-process detector.
+
+    Use this tool when the user asks about:
+    - Hidden / unlinked process detection
+    - Comparing pslist vs psscan vs thread-scan vs CSRSS handles
+    - Cross-view rootkit detection (DKOM, EPROCESS unlinking)
+    - Quick triage when something is suspected of hiding from pslist
+
+    Arguments:
+    - physical_offsets (optional, default False): if True, the Offset
+      column reports physical addresses (matches pool-scan results);
+      default reports virtual addresses.
+
+    Returns a dict with:
+    - "plugin": "malware.psxview"
+    - "results": list of dicts, each containing:
+        "Offset(Virtual)" / "Offset(Physical)": process offset (str, hex)
+          (column name varies based on physical_offsets argument),
+        "Name": process image name (str),
+        "PID": process ID (int),
+        "pslist": True if visible to active-list walk (bool),
+        "psscan": True if visible to pool-tag scan (bool),
+        "thrdscan": True if visible via owning-thread enumeration (bool),
+        "csrss": True if registered in csrss.exe handle table (bool),
+        "Exit Time": process exit timestamp, or empty for live procs (str)
+
+    Forensic context:
+    - The classic "True / True / True / True / empty Exit Time" row is a
+      legitimate live process. Any False in the first four columns on a
+      live process (no Exit Time) deserves investigation
+    - psscan-only (True for psscan, False elsewhere) ⇒ DKOM-unlinked
+      process — high-signal rootkit
+    - thrdscan-only (True for thrdscan only) ⇒ pool-scrubbed EPROCESS
+      with surviving threads — also high-signal
+    - csrss-only ⇒ a live process whose EPROCESS has been deeply
+      scrubbed but is still tracked by the windowing subsystem
+    - Pair with windows_pslist / windows_psscan for raw enumeration
+      detail when this tool flags a discrepancy
+    """
+    return session.run_plugin("malware.psxview", physical_offsets=physical_offsets)
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
