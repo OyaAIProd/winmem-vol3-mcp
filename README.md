@@ -71,7 +71,7 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-61 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
+66 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
 
 | Category | Plugins |
 |---|---|
@@ -79,7 +79,7 @@ You can then ask follow-up questions to dig deeper:
 | Memory Analysis | vadinfo, vadwalk, memmap, virtmap, strings, shimcachemem, vadregexscan |
 | Module / DLL Analysis | dlllist, modules, modscan, verinfo, iat, pe_symbols, pedump |
 | Network Analysis | netscan, netstat |
-| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, devicetree, ssdt, poolscanner, orphan_kernel_threads |
+| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, devicetree, ssdt, poolscanner, orphan_kernel_threads, kpcrs, unloadedmodules, timers, debugregisters, etwpatch |
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan |
 | Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates, registry.scheduled_tasks, registry.getcellroutine, registry.amcache |
 | Service Analysis | svcscan, svclist |
