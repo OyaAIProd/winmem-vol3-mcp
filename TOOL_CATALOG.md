@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-56 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+57 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -91,6 +91,7 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.registry.certificates` | `windows_registry_certificates` | List certificates from registry store |
 | `windows.registry.scheduled_tasks` | `windows_registry_scheduled_tasks` | Decode Task Scheduler entries (persistence indicator) |
 | `windows.registry.getcellroutine` | `windows_registry_getcellroutine` | Detect hives with hooked GetCellRoutine handler (registry rootkit) |
+| `windows.registry.amcache` | `windows_registry_amcache` | Decode AmCache.hve application execution records (SHA1, timestamps) |
 
 ## Service Analysis
 

@@ -1783,6 +1783,60 @@ def windows_registry_getcellroutine() -> dict:
 
 
 @mcp.tool()
+def windows_registry_amcache() -> dict:
+    """
+    Run the registry.amcache plugin to decode AmCache.hve, which records
+    metadata about every application, driver, or installer that has
+    executed on the system.
+
+    Use this tool when the user asks about:
+    - What programs / EXEs were run on this system and when
+    - Evidence of execution (MITRE ATT&CK T1005 / investigator questions
+      like "did foo.exe ever run here?")
+    - Driver or service binary history
+    - SHA1 hashes of executed files for IoC matching or sandbox lookup
+    - Program install / compile / last-modified timestamps
+    - First-time / post-breach triage on an image with no prelogged data
+
+    Returns a dict with:
+    - "plugin": "registry.amcache"
+    - "results": list of dicts, each containing:
+        "EntryType": AmCache entry category such as Programs,
+          InventoryApplicationFile, InventoryDriverBinary, etc. (str),
+        "Path": full file path of the executable (str),
+        "Company": company / vendor reported in PE resources (str),
+        "LastModifyTime": registry key last-write time (str, UTC),
+        "LastModifyTime2": secondary modification timestamp (str, UTC),
+        "InstallTime": recorded install timestamp (str, UTC),
+        "CompileTime": PE compilation timestamp (str, UTC),
+        "SHA1": SHA1 hash of the file recorded by AmCache (str),
+        "Service": name of the service backed by this binary, if any (str),
+        "ProductName": product name from PE version info (str),
+        "ProductVersion": product version from PE version info (str)
+
+    Forensic context:
+    - AmCache is one of the most important evidence-of-execution artifacts
+      on Windows — it records binaries that ran even after the executable
+      has been deleted from disk. A hit here with a matching SHA1 is a
+      very strong indicator of execution
+    - LastModifyTime (registry key last-write) usually aligns with the
+      first time the binary was executed; correlate with process creation
+      times from windows_pslist to place an incident on a timeline
+    - Compare SHA1 values against public threat intel / VirusTotal. Entries
+      whose Path points to user-writable directories (AppData, ProgramData,
+      %TEMP%) with an unsigned or unknown Company are high-signal leads
+    - Combine with windows_registry_userassist (execution by user via
+      Explorer) and windows_registry_scheduled_tasks (execution by Task
+      Scheduler) for a fuller persistence / execution picture
+    - Driver entries (EntryType containing InventoryDriverBinary) let you
+      enumerate all drivers ever loaded; correlate with windows_modules
+      and windows_drivermodule to spot drivers that executed historically
+      but are no longer loaded
+    """
+    return session.run_plugin("registry.amcache")
+
+
+@mcp.tool()
 def windows_skeleton_key_check() -> dict:
     """
     Run the skeleton_key_check plugin to detect the Skeleton Key malware
