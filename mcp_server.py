@@ -1687,6 +1687,60 @@ def windows_registry_certificates() -> dict:
 
 
 @mcp.tool()
+def windows_registry_scheduled_tasks() -> dict:
+    """
+    Run the registry.scheduled_tasks plugin to decode Windows Task
+    Scheduler entries stored in the registry, including triggers,
+    actions, run times, and creation times.
+
+    Use this tool when the user asks about:
+    - Scheduled tasks, Task Scheduler jobs, or at/schtasks artifacts
+    - Persistence mechanisms via the Task Scheduler
+    - Which programs are set to run on a schedule or on event triggers
+    - Creation time / last run time of scheduled tasks
+    - Malware persistence registered as a scheduled task
+
+    Returns a dict with:
+    - "plugin": "registry.scheduled_tasks"
+    - "results": list of dicts, each containing:
+        "Task Name": task name / path (str),
+        "Principal ID": security principal running the task (str),
+        "Display Name": display name of the task (str),
+        "Enabled": whether the task is enabled (bool),
+        "Creation Time": when the task was created (str, UTC),
+        "Last Run Time": when the task last ran (str, UTC),
+        "Last Successful Run Time": last successful run (str, UTC),
+        "Trigger Type": trigger category (Time, Logon, Boot, Event, ...)
+          (str),
+        "Trigger Description": human-readable trigger detail (str),
+        "Action Type": action category (Exec, ComHandler, ...) (str),
+        "Action": executable or handler invoked (str),
+        "Action Arguments": arguments passed to the action (str),
+        "Action Context": security context for the action (str),
+        "Working Directory": working directory used when running (str),
+        "Key Name": registry key name backing the task (str)
+
+    Forensic context:
+    - Scheduled tasks are one of the most common Windows persistence
+      techniques (MITRE ATT&CK T1053.005). Pay special attention to
+      tasks with Trigger Type = Logon or Boot and actions pointing to
+      user-writable paths (AppData, ProgramData, Public)
+    - Creation Time vs Last Run Time reveals freshly created persistence
+      tasks that have already executed — correlate with windows_pslist
+      and process timestamps to link the task to observed activity
+    - Action fields containing LOLBins (powershell.exe, rundll32.exe,
+      mshta.exe, regsvr32.exe) with obfuscated arguments are high-signal
+      persistence indicators
+    - Use the Key Name to locate the full registry entry with
+      windows_registry_printkey for deeper inspection
+    - Cross-reference task creation times against process creation times
+      from windows_pslist to identify the process that registered the
+      task
+    """
+    return session.run_plugin("registry.scheduled_tasks")
+
+
+@mcp.tool()
 def windows_skeleton_key_check() -> dict:
     """
     Run the skeleton_key_check plugin to detect the Skeleton Key malware
