@@ -72,9 +72,16 @@ def run_timers(session: Session) -> dict:
     return {"plugin": "timers", "results": parse_treegrid(treegrid)}
 
 
+def run_debugregisters(session: Session) -> dict:
+    """Run windows.debugregisters and return per-thread DR0-DR3 / DR7 state."""
+    treegrid = run_plugin(session, debugregisters.DebugRegisters)
+    return {"plugin": "debugregisters", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "bigpools": run_bigpools,
     "callbacks": run_callbacks,
+    "debugregisters": run_debugregisters,
     "devicetree": run_devicetree,
     "driverirp": run_driverirp,
     "driverscan": run_driverscan,

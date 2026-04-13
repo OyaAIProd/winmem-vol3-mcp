@@ -2474,6 +2474,55 @@ def windows_timers() -> dict:
 
 
 @mcp.tool()
+def windows_debugregisters() -> dict:
+    """
+    Run the debugregisters plugin to dump each thread's hardware
+    debug-register state (DR0-DR3 addresses, DR7 control) and resolve
+    every non-zero breakpoint address to its owning module/symbol.
+
+    Use this tool when the user asks about:
+    - Hardware breakpoints set on the system
+    - Debug register hijacking or EDR-evasion via DR hooks
+    - Malware using DR0-DR3 to intercept API calls without patching code
+    - Threads attached to a debugger with active HW breakpoints
+    - Explaining unusual Dr7 bit patterns across threads
+
+    Returns a dict with:
+    - "plugin": "debugregisters"
+    - "results": list of dicts (one row per thread whose DR state is
+      non-zero), each containing:
+        "Process": owning process image name (str),
+        "PID": process ID (int),
+        "TID": thread ID (int),
+        "State": thread state code (int),
+        "Dr7": raw DR7 control register value (int),
+        "Dr0", "Dr1", "Dr2", "Dr3": breakpoint addresses (str, hex),
+        "Range0..3": memory range / module backing each breakpoint
+          address (str or None),
+        "Symbol0..3": symbol name at each breakpoint address, when
+          resolvable (str or None)
+
+    Forensic context:
+    - Hardware breakpoints are invisible to user-space code (no INT3
+      patching), so malware uses them to hook APIs like NtCreateFile,
+      LdrLoadDll, or csrss's ConsoleAlloc handlers while leaving
+      memory untouched — any thread with non-null DR0-DR3 in a
+      non-debugger process is suspicious
+    - Look at Dr7 layout: the lower 8 bits enable DR0-DR3 per-thread;
+      the upper bits encode condition (execute/write/IO/read-write)
+      and length. Suspicious DR7 on non-debugger threads deserves
+      scrutiny
+    - Range / Symbol columns let you immediately see which API was
+      being watched — e.g. Symbol1="LdrLoadDll" in a non-debugger
+      process is almost certainly an EDR-evasion hook
+    - Cross-reference the TID with windows_threads to get the thread's
+      StartAddress, and windows_malware_malfind to see if the owning
+      VAD was injected
+    """
+    return session.run_plugin("debugregisters")
+
+
+@mcp.tool()
 def windows_svcscan() -> dict:
     """
     Run the svcscan plugin to enumerate Windows services by scanning the
