@@ -66,19 +66,19 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-All 49 Windows plugins provided by Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are fully integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference.
+52 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
 
 | Category | Plugins |
 |---|---|
-| Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan |
+| Process Analysis | pslist, psscan, pstree, cmdline, sessions, getsids, privileges, envars, handles, joblinks, thrdscan, threads |
 | Memory Analysis | malfind, vadinfo, vadwalk, memmap, virtmap, strings |
 | Module / DLL Analysis | dlllist, ldrmodules, modules, modscan, verinfo, iat |
 | Network Analysis | netscan, netstat |
-| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner |
+| Kernel / Driver Analysis | bigpools, callbacks, driverscan, driverirp, drivermodule, devicetree, ssdt, poolscanner, orphan_kernel_threads |
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan |
 | Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates |
 | System Information | info, statistics, crashinfo |
-| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids |
+| Security / Malware | skeleton_key_check, mbrscan, truecrypt, getservicesids, suspended_threads |
 
 ## Architecture
 
