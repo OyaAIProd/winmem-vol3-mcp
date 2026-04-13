@@ -2005,5 +2005,46 @@ def windows_svcscan() -> dict:
     return session.run_plugin("svcscan")
 
 
+@mcp.tool()
+def windows_svclist() -> dict:
+    """
+    Run the svclist plugin to enumerate Windows services by walking the
+    services.exe doubly linked list of service records (list-based view,
+    as opposed to svcscan's signature scan).
+
+    Use this tool when the user asks about:
+    - The canonical list of services currently registered with SCM
+    - Running services in their linked order
+    - A list-walk view of services for comparison against svcscan results
+    - Detection of hidden services via list/scan discrepancy
+    - Persistence mechanisms registered with the Service Control Manager
+
+    Important: this plugin supports only 64-bit Windows 10 build 15063 and
+    later. On older Windows 7 / 8 / 8.1 or 32-bit samples it will log a
+    warning and return an empty result — use windows_svcscan instead.
+
+    Returns a dict with:
+    - "plugin": "svclist"
+    - "results": list of dicts with the same schema as windows_svcscan:
+        "Offset", "Order", "PID", "Start", "State", "Type", "Name",
+        "Display", "Binary", "Binary (Registry)", "Dll"
+
+    Forensic context:
+    - svclist walks the in-memory linked list of service records used by
+      SCM, while svcscan discovers records by signature scanning — any
+      service present in svcscan but missing from svclist is a strong
+      rootkit / DKOM indicator (the record was unlinked from SCM's list
+      but still lives in memory)
+    - Use the two tools together: run windows_svcscan and windows_svclist,
+      then diff the Name column. This is the logic the deprecated
+      windows.svcdiff wrapper (canonical: windows.malware.svcdiff)
+      performs internally
+    - If svclist returns empty on a supported OS, the services.exe VAD
+      scan failed — investigate process integrity with windows_pslist
+      and windows_malfind for PID of services.exe
+    """
+    return session.run_plugin("svclist")
+
+
 if __name__ == "__main__":
     mcp.run()
