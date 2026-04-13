@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import memmap, shimcachemem, strings, vadinfo, vadwalk, virtmap
+from volatility3.plugins.windows import memmap, shimcachemem, strings, vadinfo, vadregexscan, vadwalk, virtmap
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -48,11 +48,26 @@ def run_shimcachemem(session: Session) -> dict:
     return {"plugin": "shimcachemem", "results": parse_treegrid(treegrid)}
 
 
+def run_vadregexscan(session: Session, pattern: str, maxsize: int = 128) -> dict:
+    """Run windows.vadregexscan against every process VAD with the given regex.
+
+    pattern: regex pattern to search (required by the plugin).
+    maxsize: maximum byte context around each match (default 128).
+    """
+    treegrid = run_plugin(
+        session,
+        vadregexscan.VadRegExScan,
+        extra_config={"pattern": pattern, "maxsize": maxsize},
+    )
+    return {"plugin": "vadregexscan", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "memmap": run_memmap,
     "shimcachemem": run_shimcachemem,
     "strings": run_strings,
     "vadinfo": run_vadinfo,
+    "vadregexscan": run_vadregexscan,
     "vadwalk": run_vadwalk,
     "virtmap": run_virtmap,
 }

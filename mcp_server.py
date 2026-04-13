@@ -875,6 +875,58 @@ def windows_shimcachemem() -> dict:
 
 
 @mcp.tool()
+def windows_vadregexscan(pattern: str, maxsize: int = 128) -> dict:
+    """
+    Run the vadregexscan plugin to search every process's virtual memory
+    (all VADs) for a user-supplied regular expression. This is the first
+    parameterized MCP tool in the server — Claude must supply a `pattern`.
+
+    Use this tool when the user asks about:
+    - Searching process memory for a specific string, URL, IP, or regex
+    - Finding indicators of compromise (IOCs) hidden in user-mode memory
+    - Locating configuration strings, keys, or tokens embedded in a process
+    - Regex-based hunt across all running processes in one pass
+    - Questions like "is the string foo anywhere in memory?" or
+      "find any process memory containing /cmd.exe/"
+
+    Arguments:
+    - pattern (required): a regular expression (Python `re` syntax). The
+      plugin interprets it as UTF-8 bytes internally, so typical ASCII /
+      wide-char byte-level regexes work (e.g., `r"https?://[\\w.-]+"`,
+      `r"\\\\Device\\\\"`, `r"BEGIN [A-Z ]+ KEY"`).
+    - maxsize (optional, default 128): maximum number of bytes of
+      surrounding context captured per match.
+
+    Returns a dict with:
+    - "plugin": "vadregexscan"
+    - "results": list of dicts, each containing:
+        "PID": process ID where the match was found (int),
+        "Process": image name of that process (str),
+        "Offset": virtual address of the match (str, hex),
+        "Text": UTF-8 decoded match / context (str),
+        "Hex": raw bytes of the match (str repr of the bytes object)
+
+    Forensic context:
+    - A high-value general-purpose hunt tool. Unlike windows_strings (which
+      needs a pre-generated strings file), this scans live process memory
+      directly with a regex
+    - Good first probe for IOC hunts: paste in a URL, IP, domain, process
+      name, or magic byte sequence and get back every process containing
+      it, in one call
+    - Large or loose patterns on a busy image can scan tens of GB of VAD
+      space; prefer anchored or specific patterns. If the match count is
+      huge, tighten the regex first
+    - Use the PID column to pivot to windows_pslist for process context,
+      windows_cmdline for arguments, and windows_malware_malfind to see
+      whether the hit falls inside a suspicious VAD
+    - Example hunt queries: `r"\\\\\\\\"` (UNC paths), `r"curl\\.exe"`
+      (living-off-the-land), `r"-----BEGIN"` (crypto material leakage),
+      `r"powershell\\s*-e"` (encoded PowerShell).
+    """
+    return session.run_plugin("vadregexscan", pattern=pattern, maxsize=maxsize)
+
+
+@mcp.tool()
 def windows_dlllist() -> dict:
     """
     Run the dlllist plugin to list DLLs and loaded modules for each process
