@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import dlllist, iat, modscan, modules, pedump, verinfo
+from volatility3.plugins.windows import dlllist, iat, modscan, modules, pe_symbols, pedump, verinfo
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -42,6 +42,32 @@ def run_iat(session: Session) -> dict:
     return {"plugin": "iat", "results": parse_treegrid(treegrid)}
 
 
+def run_pe_symbols(
+    session: Session,
+    source: str,
+    module: str,
+    symbols: str = "",
+    addresses: str = "",
+) -> dict:
+    """Run windows.pe_symbols to resolve PE symbol names <-> addresses.
+
+    source: "kernel" or "processes".
+    module: target module name (e.g., "ntoskrnl.exe", "ntdll.dll").
+    symbols: optional comma-separated symbol names to resolve (name -> address).
+    addresses: optional comma-separated hex/decimal addresses (address -> name).
+    When both are empty the plugin lists every symbol in the module.
+    """
+    extra: dict = {"source": source, "module": module}
+    sym_list = [s.strip() for s in symbols.split(",") if s.strip()] if symbols else None
+    if sym_list:
+        extra["symbols"] = sym_list
+    addr_list = [int(a.strip(), 0) for a in addresses.split(",") if a.strip()] if addresses else None
+    if addr_list:
+        extra["addresses"] = addr_list
+    treegrid = run_plugin(session, pe_symbols.PESymbols, extra_config=extra)
+    return {"plugin": "pe_symbols", "results": parse_treegrid(treegrid)}
+
+
 def run_pedump(
     session: Session,
     base: int,
@@ -75,6 +101,7 @@ PLUGIN_MAP = {
     "iat": run_iat,
     "modscan": run_modscan,
     "modules": run_modules,
+    "pe_symbols": run_pe_symbols,
     "pedump": run_pedump,
     "verinfo": run_verinfo,
 }

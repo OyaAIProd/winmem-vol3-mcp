@@ -1154,6 +1154,69 @@ def windows_iat() -> dict:
 
 
 @mcp.tool()
+def windows_pe_symbols(
+    source: str,
+    module: str,
+    symbols: str = "",
+    addresses: str = "",
+) -> dict:
+    """
+    Run the pe_symbols plugin to resolve PE symbol names to addresses (or
+    addresses back to names) for a given loaded module, using PDB data
+    downloaded for that image.
+
+    Use this tool when the user asks about:
+    - What function lives at a given address inside ntoskrnl / ntdll / ...
+    - The address of a specific Windows API inside a loaded library
+    - Resolving a suspicious thread start address to a function name
+    - Dumping all exported / internal symbols of a particular module
+    - Verifying whether an address falls inside a legitimate function
+
+    Arguments:
+    - source (required): "kernel" to resolve inside the Windows kernel
+      module, or "processes" to resolve inside a loaded user-mode module.
+    - module (required): module filename. Examples: "ntoskrnl.exe" for
+      the kernel, "ntdll.dll" / "kernel32.dll" for common userland
+      libraries.
+    - symbols (optional): comma-separated symbol names to resolve into
+      addresses (e.g., "NtCreateFile,NtOpenProcess"). When provided,
+      results only contain matches for these symbols.
+    - addresses (optional): comma-separated hex or decimal addresses to
+      resolve into symbol names (e.g., "0x14012a0a0,0x14012b100").
+    - When both ``symbols`` and ``addresses`` are empty, every symbol in
+      the module is returned (can be very large — use cautiously).
+
+    Returns a dict with:
+    - "plugin": "pe_symbols"
+    - "results": list of dicts, each containing:
+        "Module": module name the symbol belongs to (str),
+        "Symbol": symbol name (str),
+        "Address": resolved virtual address (str, hex)
+
+    Forensic context:
+    - Requires PDB download to succeed on the server (volatility3's symbol
+      auto-download mechanism); failures usually mean no internet access
+      at startup time
+    - Key pivot for suspicious thread analysis: take Win32StartAddress
+      from windows_threads / windows_orphan_kernel_threads and call
+      this tool with that value to obtain the function name
+    - Useful for IAT-hooking detection alongside windows_iat: resolve
+      the expected function address here, compare against the imported
+      entry's current address
+    - Kernel-mode hunts (source="kernel", module="ntoskrnl.exe") are
+      the go-to for understanding callbacks, SSDT entries, or rootkit
+      hook targets reported by windows_ssdt / windows_callbacks
+    """
+    return session.run_plugin(
+        "pe_symbols",
+        source=source,
+        module=module,
+        symbols=symbols,
+        addresses=addresses,
+    )
+
+
+@mcp.tool()
 def windows_pedump(base: int, pid: int = 0, kernel_module: bool = False) -> dict:
     """
     Run the pedump plugin to reconstruct a PE image from memory at a
