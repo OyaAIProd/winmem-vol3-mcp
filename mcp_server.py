@@ -2523,6 +2523,55 @@ def windows_debugregisters() -> dict:
 
 
 @mcp.tool()
+def windows_etwpatch(pid: int = 0) -> dict:
+    """
+    Run the etwpatch plugin to detect in-memory tampering of ETW
+    (Event Tracing for Windows) stub functions inside ntdll.dll —
+    a common evasion technique to blind security telemetry.
+
+    Use this tool when the user asks about:
+    - ETW patching, ETW tampering, or ETW evasion
+    - EDR / antivirus telemetry disabling in user mode
+    - Malware hooking EtwEventWrite / NtTraceEvent / EtwNotificationRegister
+    - Processes with unusual ETW stub prologues (e.g., ``ret`` replacing
+      the real body)
+    - Detection of userland AMSI / ETW bypass injected into a specific PID
+
+    Arguments:
+    - pid (optional, default 0): restrict the scan to this process. When
+      0, every userland process is inspected.
+
+    Returns a dict with:
+    - "plugin": "etwpatch"
+    - "results": list of dicts (one row per patched stub detected):
+        "PID": process ID hosting the patched ntdll (int),
+        "Process": image name (str),
+        "DLL": name of the module that was tampered (typically
+          ``ntdll.dll``) (str),
+        "Function": the ETW function whose prologue differs from the
+          on-disk image (str),
+        "Offset": virtual address of the patched instruction (str, hex),
+        "Opcode": disassembly of the patched bytes (str)
+
+    Forensic context:
+    - Any non-empty result is high-signal. Modern malware commonly
+      writes ``ret`` (0xC3) or a short jump into the start of ETW
+      functions to silence telemetry inside the current process
+    - If only a subset of processes shows patches, they are usually
+      the infected ones — combine with windows_malware_malfind and
+      windows_cmdline to attribute the tampering
+    - Uses windows_pe_symbols internally for function-address
+      resolution, so symbol availability matters: if PDBs fail to
+      download at startup, the plugin cannot compare against on-disk
+      prologues
+    - Pair with windows_suspended_threads: ETW patching is often done
+      by an injected remote thread — the thread is suspended, DLLs
+      loaded, ntdll patched, then resumed
+    """
+    return session.run_plugin("etwpatch", pid=pid)
+
+
+@mcp.tool()
 def windows_svcscan() -> dict:
     """
     Run the svcscan plugin to enumerate Windows services by scanning the

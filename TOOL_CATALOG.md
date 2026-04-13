@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-65 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+66 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -77,6 +77,7 @@ Sub-namespace plugins follow `windows_{namespace}_{name}`:
 | `windows.unloadedmodules` | `windows_unloadedmodules` | List recently-unloaded kernel drivers from MmUnloadedDrivers |
 | `windows.timers` | `windows_timers` | Enumerate kernel DPC timers and resolve their routine addresses |
 | `windows.debugregisters` | `windows_debugregisters` | Dump per-thread DR0-DR3 hardware breakpoints (HW-hook rootkit indicator) |
+| `windows.etwpatch` | `windows_etwpatch(pid=0)` | Detect ETW stub tampering inside ntdll.dll (telemetry evasion) |
 
 ## File Analysis
 

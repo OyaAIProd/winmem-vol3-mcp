@@ -78,6 +78,22 @@ def run_debugregisters(session: Session) -> dict:
     return {"plugin": "debugregisters", "results": parse_treegrid(treegrid)}
 
 
+def run_etwpatch(session: Session, pid: int = 0) -> dict:
+    """Run windows.etwpatch and return ETW-tampered ntdll stubs.
+
+    pid: optional process ID filter. 0 (default) scans every userland process.
+    """
+    extra: dict = {}
+    if pid:
+        extra["pid"] = [pid]
+    treegrid = run_plugin(
+        session,
+        etwpatch.EtwPatch,
+        extra_config=extra or None,
+    )
+    return {"plugin": "etwpatch", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "bigpools": run_bigpools,
     "callbacks": run_callbacks,
@@ -85,6 +101,7 @@ PLUGIN_MAP = {
     "devicetree": run_devicetree,
     "driverirp": run_driverirp,
     "driverscan": run_driverscan,
+    "etwpatch": run_etwpatch,
     "kpcrs": run_kpcrs,
     "poolscanner": run_poolscanner,
     "ssdt": run_ssdt,
