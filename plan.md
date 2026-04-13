@@ -3,10 +3,10 @@
 ## 0. Remaining Plugin Implementation
 
 49 plugins from v2.7.0 are fully integrated. After upgrading to v2.27.0,
-42 new plugins were initially identified. Investigation revealed **6 of these
+42 new plugins were initially identified. Investigation revealed **7 of these
 are deprecated `PluginRenameClass` wrappers** that redirect to canonical
 implementations elsewhere. These wrappers are excluded to avoid duplicate
-MCP tools and deprecation warnings. Effective total: **36 plugins**.
+MCP tools and deprecation warnings. Effective total: **35 plugins**.
 
 Deprecated wrappers dropped (kept only under their canonical path):
 - `windows.suspicious_threads` → canonical `windows.malware.suspicious_threads`
@@ -18,8 +18,10 @@ Deprecated wrappers dropped (kept only under their canonical path):
 - `windows.scheduled_tasks` → canonical `windows.registry.scheduled_tasks`
   (this deprecated alias is redundant with the registry.* version already
   in the plan; expose only the canonical path)
+- `windows.amcache` → canonical `windows.registry.amcache`
+  (same duplicate-alias pattern; only expose the registry.* canonical)
 
-New plugins by category (36 total):
+New plugins by category (35 total):
 
 - **Malware** (11): malware.drivermodule, malware.hollowprocesses,
   malware.ldrmodules, malware.malfind, malware.pebmasquerade,
@@ -27,7 +29,7 @@ New plugins by category (36 total):
   malware.suspicious_threads, malware.svcdiff, malware.unhooked_system_calls
 - **Process** (3): threads, orphan_kernel_threads, suspended_threads
 - **Service** (3): svclist, svcscan, registry.scheduled_tasks
-- **Registry** (3): registry.amcache, registry.getcellroutine, amcache
+- **Registry** (2): registry.amcache, registry.getcellroutine
 - **Kernel** (6): debugregisters, etwpatch, kpcrs, timers,
   unhooked_system_calls, unloadedmodules
 - **Desktop/GUI** (3): deskscan, desktops, windowstations
@@ -55,6 +57,12 @@ create a category sub-branch, implement one plugin per commit, merge back.
   and the registry.* canonical version is already listed in the same Service
   entry — the alias was a redundant second exposure of the same plugin.
   Total new plugins: 38 → 36.
+- **2026-04-13** — Registry category reduced from 3 → 2. `windows.amcache` is a
+  deprecated wrapper for `windows.registry.amcache` (`removal_date="2026-09-25"`),
+  and the registry.* canonical version is already listed in the same Registry
+  entry — same duplicate-alias pattern as `windows.scheduled_tasks`. Drop the
+  deprecated alias; expose only the canonical `windows.registry.amcache`.
+  Total new plugins: 36 → 35.
 
 ---
 
