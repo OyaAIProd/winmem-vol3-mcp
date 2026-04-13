@@ -7,6 +7,7 @@ functions. This package aggregates them into a single PLUGIN_MAP.
 from plugins._common import BASE_CONFIG_PATH
 from plugins.file import PLUGIN_MAP as _file
 from plugins.kernel import PLUGIN_MAP as _kernel
+from plugins.malware import PLUGIN_MAP as _malware
 from plugins.memory import PLUGIN_MAP as _memory
 from plugins.module import PLUGIN_MAP as _module
 from plugins.network import PLUGIN_MAP as _network
@@ -19,6 +20,7 @@ from plugins.sysinfo import PLUGIN_MAP as _sysinfo
 PLUGIN_MAP: dict[str, callable] = {
     **_file,
     **_kernel,
+    **_malware,
     **_memory,
     **_module,
     **_network,

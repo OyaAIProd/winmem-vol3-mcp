@@ -501,7 +501,7 @@ def windows_threads() -> dict:
       injection (CreateRemoteThread / NtCreateThreadEx payloads)
     - Use the PID column to resolve to a process name via windows_pslist and
       its command line via windows_cmdline for fuller context
-    - Cross-reference with windows_malfind to correlate suspicious threads
+    - Cross-reference with windows_malware_malfind to correlate suspicious threads
       with injected memory regions in the same PID
     """
     return session.run_plugin("threads")
@@ -588,12 +588,12 @@ def windows_suspended_threads() -> dict:
       which is unusual and correlates strongly with hollowing / evasion
     - Suspended threads whose StartFile or Win32StartFile is None (start
       address outside any mapped module) indicate code running from an
-      injected memory region — pair with windows_malfind to confirm
+      injected memory region — pair with windows_malware_malfind to confirm
     - The process hollowing pattern pairs a suspended main thread with an
       overwritten image base; correlate this plugin with windows_pslist
       and windows_dlllist to see whether the process's backing image has
       been swapped
-    - If the suspended thread's PID also appears in windows_malfind or its
+    - If the suspended thread's PID also appears in windows_malware_malfind or its
       Win32StartAddress points into a VAD with RWX protection, escalate —
       this is a classic hollowing signature
     - `WorkFoldersShell.dll` is filtered out by the plugin as a known false
@@ -603,7 +603,7 @@ def windows_suspended_threads() -> dict:
 
 
 @mcp.tool()
-def windows_malfind() -> dict:
+def windows_malware_malfind() -> dict:
     """
     Run the malfind plugin to detect process memory regions that potentially
     contain injected code, based on VAD permissions and content heuristics.
@@ -641,7 +641,7 @@ def windows_malfind() -> dict:
     - Cross-reference with windows_handles to find related file or section
       objects that may reveal the injection source
     """
-    return session.run_plugin("malfind")
+    return session.run_plugin("malware.malfind")
 
 
 @mcp.tool()
@@ -678,7 +678,7 @@ def windows_vadinfo() -> dict:
       may not appear in windows_dlllist (e.g., manually mapped images)
     - Compare VAD protection flags with expected values: legitimate code
       sections are typically PAGE_EXECUTE_READ, not PAGE_EXECUTE_READWRITE
-    - Use windows_malfind for focused detection of injected regions; use
+    - Use windows_malware_malfind for focused detection of injected regions; use
       this tool for comprehensive VAD enumeration
     - Cross-reference with windows_handles (Type=Section) to identify
       shared memory mappings between processes
@@ -719,7 +719,7 @@ def windows_vadwalk() -> dict:
       per VAD entry; this tool focuses on the tree structure itself
     - Compare VAD node counts between windows_vadwalk and windows_vadinfo
       to detect inconsistencies that could signal manipulation
-    - Use windows_malfind for targeted detection of suspicious regions
+    - Use windows_malware_malfind for targeted detection of suspicious regions
       rather than walking the entire tree
     """
     return session.run_plugin("vadwalk")
@@ -855,9 +855,9 @@ def windows_dlllist() -> dict:
     Forensic context:
     - DLLs loaded from unusual paths (e.g., temp directories, user profile)
       are suspicious and may indicate DLL hijacking or malware staging
-    - Compare with windows_ldrmodules to detect discrepancies; modules
+    - Compare with windows_malware_ldrmodules to detect discrepancies; modules
       missing from one loader list but present in another suggest unlinking
-    - Use windows_malfind to check if any loaded module regions have been
+    - Use windows_malware_malfind to check if any loaded module regions have been
       modified in memory (code patching / hooking)
     - Cross-reference with windows_cmdline to verify that loaded DLLs match
       the expected behavior of each process
@@ -866,7 +866,7 @@ def windows_dlllist() -> dict:
 
 
 @mcp.tool()
-def windows_ldrmodules() -> dict:
+def windows_malware_ldrmodules() -> dict:
     """
     Run the ldrmodules plugin to cross-reference modules across the three
     PEB loader lists (InLoad, InInit, InMem) to detect unlinked DLLs.
@@ -896,10 +896,10 @@ def windows_ldrmodules() -> dict:
       warrants investigation
     - Compare with windows_dlllist which only reads InLoadOrderModuleList;
       this tool provides a more complete view
-    - Use windows_malfind to check if the unlinked module's memory region
+    - Use windows_malware_malfind to check if the unlinked module's memory region
       contains injected or modified code
     """
-    return session.run_plugin("ldrmodules")
+    return session.run_plugin("malware.ldrmodules")
 
 
 @mcp.tool()
@@ -1042,7 +1042,7 @@ def windows_iat() -> dict:
       module range, the import has been redirected (API hooking)
     - Use windows_dlllist to verify the base address range of each Library,
       then compare with the resolved Address to detect hooks
-    - Cross-reference imported functions with windows_malfind results to
+    - Cross-reference imported functions with windows_malware_malfind results to
       understand what capabilities injected code may leverage
     """
     return session.run_plugin("iat")
@@ -1156,7 +1156,7 @@ def windows_driverirp() -> dict:
 
 
 @mcp.tool()
-def windows_drivermodule() -> dict:
+def windows_malware_drivermodule() -> dict:
     """
     Run the drivermodule plugin to detect drivers that are not backed by
     a loaded kernel module, indicating potentially hidden rootkit drivers.
@@ -1187,7 +1187,7 @@ def windows_drivermodule() -> dict:
     - Cross-reference with windows_callbacks and windows_ssdt to determine
       if the hidden driver has hooked any kernel functions
     """
-    return session.run_plugin("drivermodule")
+    return session.run_plugin("malware.drivermodule")
 
 
 @mcp.tool()
@@ -1216,7 +1216,7 @@ def windows_driverscan() -> dict:
     Forensic context:
     - Drivers found here but missing from windows_modules may have been
       unlinked from the loaded module list (rootkit hiding technique)
-    - Compare with windows_drivermodule to identify drivers without a
+    - Compare with windows_malware_drivermodule to identify drivers without a
       backing kernel module
     - Use windows_driverirp to examine the IRP dispatch table of any
       suspicious drivers discovered through this scan
@@ -1830,14 +1830,14 @@ def windows_registry_amcache() -> dict:
       Scheduler) for a fuller persistence / execution picture
     - Driver entries (EntryType containing InventoryDriverBinary) let you
       enumerate all drivers ever loaded; correlate with windows_modules
-      and windows_drivermodule to spot drivers that executed historically
+      and windows_malware_drivermodule to spot drivers that executed historically
       but are no longer loaded
     """
     return session.run_plugin("registry.amcache")
 
 
 @mcp.tool()
-def windows_skeleton_key_check() -> dict:
+def windows_malware_skeleton_key_check() -> dict:
     """
     Run the skeleton_key_check plugin to detect the Skeleton Key malware
     by scanning lsass.exe for patched authentication functions.
@@ -1866,10 +1866,10 @@ def windows_skeleton_key_check() -> dict:
       compromise on a domain controller
     - Use windows_pslist to verify that lsass.exe is running with expected
       parameters and parent process (should be wininit.exe)
-    - Cross-reference with windows_malfind to check for other code
+    - Cross-reference with windows_malware_malfind to check for other code
       injections in the lsass.exe process
     """
-    return session.run_plugin("skeleton_key_check")
+    return session.run_plugin("malware.skeleton_key_check")
 
 
 @mcp.tool()
@@ -2191,7 +2191,7 @@ def windows_svclist() -> dict:
       performs internally
     - If svclist returns empty on a supported OS, the services.exe VAD
       scan failed — investigate process integrity with windows_pslist
-      and windows_malfind for PID of services.exe
+      and windows_malware_malfind for PID of services.exe
     """
     return session.run_plugin("svclist")
 

@@ -23,10 +23,13 @@ Deprecated wrappers dropped (kept only under their canonical path):
 
 New plugins by category (35 total):
 
-- **Malware** (11): malware.drivermodule, malware.hollowprocesses,
-  malware.ldrmodules, malware.malfind, malware.pebmasquerade,
-  malware.processghosting, malware.psxview, malware.skeleton_key_check,
-  malware.suspicious_threads, malware.svcdiff, malware.unhooked_system_calls
+- **Malware** (7 remaining; 4 already shipped under `windows_malware_*`):
+  malware.hollowprocesses, malware.pebmasquerade, malware.processghosting,
+  malware.psxview, malware.suspicious_threads, malware.svcdiff,
+  malware.unhooked_system_calls. Already implemented (migrated from the
+  deprecated `windows.*` aliases during the 2026-04-13 rename audit):
+  malware.drivermodule, malware.ldrmodules, malware.malfind,
+  malware.skeleton_key_check.
 - **Process** (3): threads, orphan_kernel_threads, suspended_threads
 - **Service** (3): svclist, svcscan, registry.scheduled_tasks
 - **Registry** (2): registry.amcache, registry.getcellroutine
@@ -63,6 +66,15 @@ create a category sub-branch, implement one plugin per commit, merge back.
   entry — same duplicate-alias pattern as `windows.scheduled_tasks`. Drop the
   deprecated alias; expose only the canonical `windows.registry.amcache`.
   Total new plugins: 36 → 35.
+- **2026-04-13** — Audited all 57 already-shipped MCP tools for deprecation.
+  Found 4 that were built against the deprecated `windows.*` classes rather
+  than the canonical `windows.malware.*` implementations: `drivermodule`,
+  `ldrmodules`, `malfind`, `skeleton_key_check`. Renamed the MCP tools to
+  `windows_malware_*` and switched the internal class references to
+  `windows.malware.*`, matching the naming convention that will be used for
+  the remaining 7 malware plugins. This reduces outstanding Malware work
+  from 11 → 7 (since these 4 are effectively already implemented under the
+  correct names). Total new plugins still 35.
 
 ---
 

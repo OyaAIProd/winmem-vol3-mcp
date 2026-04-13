@@ -1,21 +1,18 @@
-"""Security / malware analysis plugin wrappers (skeleton_key_check, mbrscan, ...)."""
+"""Security / integrity plugin wrappers (mbrscan, truecrypt, ...).
+
+Malware-specific plugins (windows.malware.*) live in plugins/malware.py.
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import getservicesids, mbrscan, skeleton_key_check, truecrypt
+from volatility3.plugins.windows import getservicesids, mbrscan, truecrypt
 
 from plugins._common import parse_treegrid, run_plugin
 
 if TYPE_CHECKING:
     from session import Session
-
-
-def run_skeleton_key_check(session: Session) -> dict:
-    """Run windows.skeleton_key_check and return Skeleton Key detection results."""
-    treegrid = run_plugin(session, skeleton_key_check.Skeleton_Key_Check)
-    return {"plugin": "skeleton_key_check", "results": parse_treegrid(treegrid)}
 
 
 def run_truecrypt(session: Session) -> dict:
@@ -39,6 +36,5 @@ def run_getservicesids(session: Session) -> dict:
 PLUGIN_MAP = {
     "getservicesids": run_getservicesids,
     "mbrscan": run_mbrscan,
-    "skeleton_key_check": run_skeleton_key_check,
     "truecrypt": run_truecrypt,
 }
