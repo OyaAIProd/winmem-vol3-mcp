@@ -71,7 +71,7 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-69 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
+72 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference and `plan.md` for remaining plugin coverage.
 
 | Category | Plugins |
 |---|---|
@@ -83,7 +83,8 @@ You can then ask follow-up questions to dig deeper:
 | File Analysis | filescan, dumpfiles, symlinkscan, mutantscan |
 | Registry Analysis | registry.hivelist, registry.hivescan, registry.printkey, registry.userassist, registry.certificates, registry.scheduled_tasks, registry.getcellroutine, registry.amcache |
 | Service Analysis | svcscan, svclist |
-| Desktop / GUI | windowstations, desktops, deskscan |
+| Desktop / GUI | windowstations, desktops, deskscan, windows |
+| Console / Shell | consoles, cmdscan |
 | System Information | info, statistics, crashinfo |
 | Security / Integrity | mbrscan, truecrypt, getservicesids, suspended_threads |
 | Malware Detection | malware.drivermodule, malware.ldrmodules, malware.malfind, malware.skeleton_key_check |

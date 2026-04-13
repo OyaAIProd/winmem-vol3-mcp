@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from volatility3.plugins.windows import deskscan, desktops, windowstations
+from volatility3.plugins.windows import deskscan, desktops, windows as gui_windows, windowstations
 
 from plugins._common import parse_treegrid, run_plugin
 
@@ -30,8 +30,15 @@ def run_deskscan(session: Session) -> dict:
     return {"plugin": "deskscan", "results": parse_treegrid(treegrid)}
 
 
+def run_windows(session: Session) -> dict:
+    """Run windows.windows and return per-Desktop GUI window enumeration."""
+    treegrid = run_plugin(session, gui_windows.Windows)
+    return {"plugin": "windows", "results": parse_treegrid(treegrid)}
+
+
 PLUGIN_MAP = {
     "deskscan": run_deskscan,
     "desktops": run_desktops,
+    "windows": run_windows,
     "windowstations": run_windowstations,
 }

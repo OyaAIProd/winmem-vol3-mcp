@@ -2777,5 +2777,131 @@ def windows_deskscan() -> dict:
     return session.run_plugin("deskscan")
 
 
+@mcp.tool()
+def windows_windows() -> dict:
+    """
+    Run the windows plugin to enumerate every visible / hidden GUI
+    window object across every Desktop / WindowStation, mapping each
+    window back to its owning process and its WindowProc handler.
+
+    Use this tool when the user asks about:
+    - GUI windows currently registered on the system
+    - Window titles / classes for a given process
+    - WindowProc hijacking (a foreign Procedure address inside a
+      legitimate window's handler slot)
+    - Sandbox-evasion techniques that hide windows from the taskbar
+    - Mapping a visible UI back to its hosting process
+
+    Returns a dict with:
+    - "plugin": "windows"
+    - "results": list of dicts, each containing:
+        "Offset": virtual address of the _tagWND object (str, hex),
+        "Station": parent WindowStation name (str),
+        "Session": session ID (int),
+        "Desktop": parent Desktop name (str),
+        "Window": window class / title (str),
+        "Procedure": address of the WindowProc that handles messages
+          (str, hex),
+        "Process": owning process image name (str),
+        "PID": owning process ID (int)
+
+    Forensic context:
+    - WindowProc hijacking: a Procedure address pointing outside the
+      owning module's range is a classic UI-subsystem injection
+      indicator. Use windows_pe_symbols to attribute the address to
+      its real module
+    - Cross-reference with windows_desktops / windows_deskscan to
+      confirm the parent Desktop is legitimate
+    - Hidden / off-screen windows can host clipboard hijackers,
+      keyloggers, or banking-trojan overlays — pair with
+      windows_malware_malfind on the owning PID for context
+    """
+    return session.run_plugin("windows")
+
+
+@mcp.tool()
+def windows_consoles(no_registry: bool = False) -> dict:
+    """
+    Run the consoles plugin to recover console host (conhost.exe /
+    csrss.exe legacy) artifacts from memory: scrollback screen buffers,
+    typed command history, alias data, and connected process info.
+
+    Use this tool when the user asks about:
+    - What commands a user typed in cmd.exe / PowerShell at the console
+    - Console screen buffer / scrollback contents (visible terminal text)
+    - History of commands recovered from a memory image
+    - Reconstructing an interactive shell session that the user closed
+    - Forensic IR scenarios where the suspect typed but logs were wiped
+
+    Arguments:
+    - no_registry (optional, default False): skip the registry-based
+      console signature lookup. Set True for a faster scan when the
+      registry hive is unreadable; may miss some console types on
+      newer Windows builds.
+
+    Returns a dict with:
+    - "plugin": "consoles"
+    - "results": list of dicts (multiple rows per console — one per
+      property emitted by the parser):
+        "PID": process ID hosting the console (typically conhost.exe or
+          csrss.exe; on older Windows the cmd.exe PID itself) (int),
+        "Process": image name (str),
+        "ConsoleInfo": offset of the _CONSOLE_INFORMATION structure
+          (str, hex),
+        "Property": property name such as Title, OriginalTitle,
+          ScreenBuffer, History, Alias (str),
+        "Address": virtual address of the property's data (str, hex),
+        "Data": the recovered string content (str)
+
+    Forensic context:
+    - Console artifacts persist after the shell window is closed, until
+      the host process is reaped; one of the highest-fidelity records
+      of attacker keystrokes during interactive sessions
+    - Look for ``Property == "History"`` rows for the literal command
+      history; ``Property == "ScreenBuffer"`` reveals the visible
+      terminal output the user saw (commands + output)
+    - Cross-reference recovered commands against windows_cmdline (the
+      command line that started a process) and windows_pslist
+      (parent/child) to confirm execution chains
+    - Use windows_cmdscan for a focused command-history-only view
+    """
+    return session.run_plugin("consoles", no_registry=no_registry)
+
+
+@mcp.tool()
+def windows_cmdscan(no_registry: bool = False) -> dict:
+    """
+    Run the cmdscan plugin to extract typed command history from the
+    Console Host. This is the focused subset of windows_consoles — only
+    the History property rows.
+
+    Use this tool when the user asks about:
+    - Specifically the commands a user typed (not screen output)
+    - cmd.exe / PowerShell command history recovered from memory
+    - Reconstructing a typed-command timeline for incident response
+    - Quick "what did they run?" question without full console scrollback
+
+    Arguments:
+    - no_registry (optional, default False): same as windows_consoles —
+      skip registry-based console lookup if needed.
+
+    Returns a dict with the same schema as windows_consoles
+    (PID, Process, ConsoleInfo, Property, Address, Data) but limited to
+    history-related properties. The Data column contains each typed
+    command line as the user entered it.
+
+    Forensic context:
+    - When you only need the "what did they type" answer, this is faster
+      and cleaner than parsing the full windows_consoles output
+    - Pair with windows_pslist creation timestamps to determine
+      *approximately when* each command was issued (the cmd that ran
+      typed-command appears in pslist as a child of cmd.exe / pwsh.exe)
+    - Empty result while windows_consoles also returns no conhost.exe
+      rows is expected on systems whose interactive shells ran inside
+      csrss.exe (older Windows / no conhost split)
+    """
+    return session.run_plugin("cmdscan", no_registry=no_registry)
+
+
 if __name__ == "__main__":
     mcp.run()
