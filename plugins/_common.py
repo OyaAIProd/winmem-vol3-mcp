@@ -47,13 +47,22 @@ def _noop_progress(percent: float, msg: str = "") -> None:
     """No-op progress callback required by some automagics."""
 
 
-def run_plugin(session: Session, plugin_class, extra_config: dict | None = None):
+def run_plugin(
+    session: Session,
+    plugin_class,
+    extra_config: dict | None = None,
+    open_method=None,
+):
     """Run automagic and construct a plugin, returning a TreeGrid.
 
     extra_config: optional mapping of plugin-level requirement name -> value
         (e.g. {"pattern": "abc", "maxsize": 256}). Values are injected at the
         plugin's config path before automagic runs so parameterized plugins
         such as vadregexscan can be called from MCP tools with arguments.
+    open_method: optional FileHandlerInterface subclass passed to the plugin
+        constructor. Dump plugins (``dumpfiles``, ``pedump``, ...) call
+        ``self.open(filename)`` which in turn instantiates this class to
+        persist bytes. ``Session.file_handler`` binds to ``VOL_DUMP_DIR``.
     """
     ctx = session.ctx
     plugin_name = plugin_class.__name__
@@ -68,6 +77,8 @@ def run_plugin(session: Session, plugin_class, extra_config: dict | None = None)
     automagics = automagic.choose_automagic(available, plugin_class)
     automagic.run(automagics, ctx, plugin_class, BASE_CONFIG_PATH, progress_callback=_noop_progress)
     constructed = plugin_class(ctx, plugin_config_path, progress_callback=_noop_progress)
+    if open_method is not None:
+        constructed.set_open_method(open_method)
     treegrid = constructed.run()
 
     if not session.has_config:
