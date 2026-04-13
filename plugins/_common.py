@@ -47,16 +47,26 @@ def _noop_progress(percent: float, msg: str = "") -> None:
     """No-op progress callback required by some automagics."""
 
 
-def run_plugin(session: Session, plugin_class):
-    """Run automagic and construct a plugin, returning a TreeGrid."""
+def run_plugin(session: Session, plugin_class, extra_config: dict | None = None):
+    """Run automagic and construct a plugin, returning a TreeGrid.
+
+    extra_config: optional mapping of plugin-level requirement name -> value
+        (e.g. {"pattern": "abc", "maxsize": 256}). Values are injected at the
+        plugin's config path before automagic runs so parameterized plugins
+        such as vadregexscan can be called from MCP tools with arguments.
+    """
     ctx = session.ctx
     plugin_name = plugin_class.__name__
     session.apply_config(plugin_name)
+    plugin_config_path = path_join(BASE_CONFIG_PATH, plugin_name)
+
+    if extra_config:
+        for key, value in extra_config.items():
+            ctx.config[path_join(plugin_config_path, key)] = value
 
     available = automagic.available(ctx)
     automagics = automagic.choose_automagic(available, plugin_class)
     automagic.run(automagics, ctx, plugin_class, BASE_CONFIG_PATH, progress_callback=_noop_progress)
-    plugin_config_path = path_join(BASE_CONFIG_PATH, plugin_name)
     constructed = plugin_class(ctx, plugin_config_path, progress_callback=_noop_progress)
     treegrid = constructed.run()
 
