@@ -1,7 +1,7 @@
 # Volatility3 Windows Plugin Catalog
 
-All 49 plugins from `volatility3.plugins.windows.*` (v2.27.0) are fully
-integrated as MCP tools.
+52 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
 
@@ -26,6 +26,7 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.handles` | `windows_handles` | List process open handles |
 | `windows.joblinks` | `windows_joblinks` | Print process job link information |
 | `windows.thrdscan` | `windows_thrdscan` | Scan for Windows threads |
+| `windows.threads` | `windows_threads` | List per-process threads via thread list walk |
 
 ## Memory Analysis
 
@@ -68,6 +69,7 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.devicetree` | `windows_devicetree` | List device tree by drivers |
 | `windows.ssdt` | `windows_ssdt` | List system call table |
 | `windows.poolscanner` | `windows_poolscanner` | Generic pool scanner |
+| `windows.orphan_kernel_threads` | `windows_orphan_kernel_threads` | Detect kernel threads not mapped to any module (rootkit indicator) |
 
 ## File Analysis
 
@@ -104,3 +106,4 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.mbrscan` | `windows_mbrscan` | Scan for Master Boot Records |
 | `windows.truecrypt` | `windows_truecrypt` | Find TrueCrypt cached passphrases |
 | `windows.getservicesids` | `windows_getservicesids` | List process token service SIDs |
+| `windows.suspended_threads` | `windows_suspended_threads` | Detect never-resumed suspended threads (hollowing / EDR evasion) |

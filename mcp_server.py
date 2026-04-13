@@ -465,6 +465,144 @@ def windows_thrdscan() -> dict:
 
 
 @mcp.tool()
+def windows_threads() -> dict:
+    """
+    Run the threads plugin to enumerate process threads by walking each
+    process's ThreadListHead linked list (the canonical active-thread view).
+
+    Use this tool when the user asks about:
+    - Which threads belong to a running process
+    - Per-process thread enumeration or thread ownership
+    - Active threads (as opposed to pool-scanned terminated threads)
+    - Thread start addresses or entry points for live processes
+    - Investigating a specific process's threads after spotting it in pslist
+
+    Returns a dict with:
+    - "plugin": "threads"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the ETHREAD structure (str, hex),
+        "PID": owning process ID (int),
+        "TID": thread ID (int),
+        "StartAddress": thread start address (str, hex),
+        "StartPath": module path containing the start address (str or None),
+        "Win32StartAddress": Win32 thread start address (str, hex),
+        "Win32StartPath": module path containing the Win32 start address
+          (str or None),
+        "CreateTime": thread creation timestamp (str),
+        "ExitTime": thread exit timestamp (str or None)
+
+    Forensic context:
+    - Unlike windows_thrdscan (pool-tag scan that can surface terminated or
+      unlinked threads), this plugin walks active thread lists, so results
+      only reflect currently linked threads — compare the two to spot
+      hidden/unlinked threads (presence in thrdscan but not threads)
+    - Win32StartAddress pointing outside any legitimate module
+      (Win32StartPath is None) is a classic indicator of remote thread
+      injection (CreateRemoteThread / NtCreateThreadEx payloads)
+    - Use the PID column to resolve to a process name via windows_pslist and
+      its command line via windows_cmdline for fuller context
+    - Cross-reference with windows_malfind to correlate suspicious threads
+      with injected memory regions in the same PID
+    """
+    return session.run_plugin("threads")
+
+
+@mcp.tool()
+def windows_orphan_kernel_threads() -> dict:
+    """
+    Run the orphan_kernel_threads plugin to detect kernel threads whose
+    start address does not map to any loaded kernel module.
+
+    Use this tool when the user asks about:
+    - Rootkits, kernel-mode malware, or kernel implants
+    - Kernel threads with no owning driver or module
+    - Hidden kernel execution or unlinked kernel code
+    - Suspicious activity inside the System process (PID 4)
+    - Threads running from non-module kernel memory
+
+    Returns a dict with:
+    - "plugin": "orphan_kernel_threads"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the ETHREAD structure (str, hex),
+        "PID": owning process ID, typically 4 (System) or a child kernel
+          process such as MemCompression / Registry (int),
+        "TID": thread ID (int),
+        "StartAddress": kernel thread start address that does not resolve
+          to any module (str, hex),
+        "StartPath": module path — always None for orphans by definition,
+        "Win32StartAddress": Win32 start address (str, hex),
+        "Win32StartPath": Win32 module path (str or None),
+        "CreateTime": thread creation timestamp (str),
+        "ExitTime": thread exit timestamp (str or None)
+
+    Forensic context:
+    - Any non-empty result is high-signal: a kernel thread executing outside
+      every loaded module is a strong rootkit indicator (e.g., manually
+      mapped driver, DKOM-hidden module, shellcode injected into kernel
+      memory pools)
+    - The plugin filters aggressively (skips terminated/smeared threads and
+      userland pointers) so findings are unlikely to be noise — investigate
+      each result
+    - Resolve the StartAddress against windows_modules and windows_modscan:
+      presence in modscan but absence in modules suggests an unlinked module
+      that owns the orphan thread
+    - Correlate with windows_ssdt and windows_callbacks to find additional
+      rootkit hooks tied to the same suspect memory region
+    - Use windows_poolscanner to look for orphan kernel objects near the
+      thread's start address
+    """
+    return session.run_plugin("orphan_kernel_threads")
+
+
+@mcp.tool()
+def windows_suspended_threads() -> dict:
+    """
+    Run the suspended_threads plugin to find userland threads whose
+    SuspendCount is greater than zero and were never resumed.
+
+    Use this tool when the user asks about:
+    - Process hollowing, process doppelgänging, or EDR evasion indicators
+    - Threads left in a suspended state (never resumed)
+    - Signs of thread injection paused before execution
+    - Anomalies relating to CreateProcess with CREATE_SUSPENDED
+    - Detection of techniques described in the Volexity DEF CON 2024 paper
+
+    Returns a dict with:
+    - "plugin": "suspended_threads"
+    - "results": list of dicts, each containing:
+        "Process": owning process image name (str),
+        "PID": process ID (int),
+        "TID": thread ID (int),
+        "StartFile": file path containing the thread start address
+          (str or None),
+        "StartSymbol": symbol at the thread start address (str or None),
+        "StartAddress": thread start address (str, hex),
+        "Win32StartFile": file path containing the Win32 start address
+          (str or None),
+        "Win32StartSymbol": symbol at the Win32 start address (str or None),
+        "Win32StartAddress": Win32 thread start address (str, hex)
+
+    Forensic context:
+    - Legitimate code routinely creates threads suspended then resumes them;
+      this plugin surfaces only threads still suspended at acquisition time,
+      which is unusual and correlates strongly with hollowing / evasion
+    - Suspended threads whose StartFile or Win32StartFile is None (start
+      address outside any mapped module) indicate code running from an
+      injected memory region — pair with windows_malfind to confirm
+    - The process hollowing pattern pairs a suspended main thread with an
+      overwritten image base; correlate this plugin with windows_pslist
+      and windows_dlllist to see whether the process's backing image has
+      been swapped
+    - If the suspended thread's PID also appears in windows_malfind or its
+      Win32StartAddress points into a VAD with RWX protection, escalate —
+      this is a classic hollowing signature
+    - `WorkFoldersShell.dll` is filtered out by the plugin as a known false
+      positive, so any result here is after de-noising
+    """
+    return session.run_plugin("suspended_threads")
+
+
+@mcp.tool()
 def windows_malfind() -> dict:
     """
     Run the malfind plugin to detect process memory regions that potentially

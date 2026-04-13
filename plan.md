@@ -3,16 +3,26 @@
 ## 0. Remaining Plugin Implementation
 
 49 plugins from v2.7.0 are fully integrated. After upgrading to v2.27.0,
-42 new plugins were discovered. These need to be implemented next.
+42 new plugins were initially identified. Investigation (2026-04-13) confirmed
+that **4 of these are deprecated wrappers** that redirect to the canonical
+`windows.malware.*` implementations via `deprecation.PluginRenameClass` with
+`removal_date="2026-06-07"` (~55 days away). These deprecated wrappers are
+excluded from the plan to avoid redundant MCP tools and deprecation warnings.
+Effective total: **38 plugins**.
 
-New plugins by category:
+Deprecated wrappers dropped from Process category (kept only in Malware):
+- `windows.suspicious_threads` → canonical `windows.malware.suspicious_threads`
+- `windows.psxview` → canonical `windows.malware.psxview`
+- `windows.hollowprocesses` → canonical `windows.malware.hollowprocesses`
+- `windows.processghosting` → canonical `windows.malware.processghosting`
+
+New plugins by category (38 total):
 
 - **Malware** (11): malware.drivermodule, malware.hollowprocesses,
   malware.ldrmodules, malware.malfind, malware.pebmasquerade,
   malware.processghosting, malware.psxview, malware.skeleton_key_check,
   malware.suspicious_threads, malware.svcdiff, malware.unhooked_system_calls
-- **Process** (7): hollowprocesses, processghosting, psxview,
-  suspended_threads, suspicious_threads, orphan_kernel_threads, threads
+- **Process** (3): threads, orphan_kernel_threads, suspended_threads
 - **Service** (5): svclist, svcscan, svcdiff, scheduled_tasks,
   registry.scheduled_tasks
 - **Registry** (3): registry.amcache, registry.getcellroutine, amcache
@@ -25,6 +35,16 @@ New plugins by category:
 
 Work should continue on the `plugin` branch using the same pattern:
 create a category sub-branch, implement one plugin per commit, merge back.
+
+### History
+
+- **2026-04-13** — Process category reduced from 7 → 3 after confirming that
+  `suspicious_threads`, `psxview`, `hollowprocesses`, `processghosting` under
+  `volatility3.plugins.windows.*` are deprecated `PluginRenameClass` wrappers
+  (`removal_date="2026-06-07"`) that redirect to `windows.malware.*` canonical
+  implementations. Implementing both would create duplicate MCP tools and emit
+  deprecation warnings. Canonical versions will be covered in Malware category.
+  Total new plugins: 42 → 38.
 
 ---
 
