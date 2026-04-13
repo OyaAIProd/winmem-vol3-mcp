@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-52 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+53 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -89,6 +89,12 @@ Registry sub-plugins use `windows_registry_{name}`.
 | `windows.registry.printkey` | `windows_registry_printkey` | Print registry keys and values |
 | `windows.registry.userassist` | `windows_registry_userassist` | Print UserAssist registry data |
 | `windows.registry.certificates` | `windows_registry_certificates` | List certificates from registry store |
+
+## Service Analysis
+
+| Volatility3 Plugin | MCP Tool Name | Description |
+|---|---|---|
+| `windows.svcscan` | `windows_svcscan` | Enumerate Windows services by scanning services.exe |
 
 ## System Information
 

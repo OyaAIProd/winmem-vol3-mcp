@@ -1954,5 +1954,56 @@ def windows_bigpools() -> dict:
     return session.run_plugin("bigpools")
 
 
+@mcp.tool()
+def windows_svcscan() -> dict:
+    """
+    Run the svcscan plugin to enumerate Windows services by scanning the
+    services.exe process memory for service record signatures.
+
+    Use this tool when the user asks about:
+    - Windows services, service configuration, or installed services
+    - Which services are running, stopped, or set to auto-start
+    - Service binaries, service DLLs, or service host mapping
+    - Malicious services used for persistence (e.g., scheduled-boot payload)
+    - Suspicious or unknown services that do not ship with Windows
+
+    Returns a dict with:
+    - "plugin": "svcscan"
+    - "results": list of dicts, each containing:
+        "Offset": virtual offset of the service record (str, hex),
+        "Order": ordinal position within the enumerated set (int),
+        "PID": process ID hosting the service — typically services.exe or
+          a svchost.exe group (int),
+        "Start": start type (Auto / Manual / Disabled / System / Boot) (str),
+        "State": current runtime state (Running / Stopped / Paused / ...)
+          (str),
+        "Type": service type flags (Kernel Driver, Win32 Own Process, etc.)
+          (str),
+        "Name": internal service name (str),
+        "Display": human-readable display name (str),
+        "Binary": resolved service binary path or ServiceMain entrypoint
+          (str),
+        "Binary (Registry)": raw ImagePath value from the registry (str),
+        "Dll": service DLL for svchost-hosted services (str or None)
+
+    Forensic context:
+    - Services configured with Start=Auto whose Binary points to a
+      temp/user-writable path (e.g., AppData, ProgramData) are classic
+      persistence indicators
+    - Cross-reference Binary and Binary (Registry): divergence can indicate
+      service hijacking (registry tampering without restart) or unhooking
+    - Unusual service types (e.g., Kernel Driver pointing to an unsigned
+      or non-standard path) pair with windows_modules and windows_driverscan
+      for further rootkit analysis
+    - Correlate the PID column against windows_pslist to identify the
+      hosting svchost.exe group, then chain to windows_dlllist to inspect
+      loaded service DLLs
+    - Compare with windows_svclist (when available) to spot list/scan
+      discrepancies — a service present here but not in svclist suggests
+      DKOM/unlinking of the service record
+    """
+    return session.run_plugin("svcscan")
+
+
 if __name__ == "__main__":
     mcp.run()
