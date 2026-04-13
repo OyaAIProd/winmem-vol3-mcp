@@ -1,6 +1,6 @@
 # Volatility3 Windows Plugin Catalog
 
-75 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
+76 plugins from `volatility3.plugins.windows.*` (v2.27.0) are integrated
 as MCP tools. The remaining v2.27.0 plugins are tracked in `plan.md`.
 
 ## Naming Convention
@@ -157,3 +157,4 @@ for these and will be removed by the Volatility Foundation on 2026-06-07.
 | `windows.malware.unhooked_system_calls` | `windows_malware_unhooked_system_calls` | Detect ntdll syscall stub divergence (EDR/unhooking malware) |
 | `windows.malware.svcdiff` | `windows_malware_svcdiff` | Diff svclist vs svcscan to surface hidden services (Win10 15063+ x64) |
 | `windows.malware.processghosting` | `windows_malware_processghosting` | Detect Process Ghosting (DeletePending / DeleteOnClose images) |
+| `windows.malware.hollowprocesses` | `windows_malware_hollowprocesses(pid=0)` | Detect Process Hollowing (image-base mismatch / VAD anomalies) |

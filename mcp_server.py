@@ -2941,6 +2941,48 @@ def windows_malware_processghosting() -> dict:
 
 
 @mcp.tool()
+def windows_malware_hollowprocesses(pid: int = 0) -> dict:
+    """
+    Run the malware.hollowprocesses plugin to detect Process Hollowing —
+    where a legitimate process is created, its image base unmapped, and
+    replaced with malicious code that runs under the original name.
+
+    Use this tool when the user asks about:
+    - Process hollowing detection (MITRE ATT&CK T1055.012)
+    - Processes whose ImageBaseAddress no longer matches the original
+      executable
+    - Identifying svchost.exe / explorer.exe / lsass.exe etc. that have
+      been hijacked
+    - VAD-protection inconsistencies on a process's main image region
+
+    Arguments:
+    - pid (optional, default 0): restrict the scan to a single process.
+      0 inspects every process.
+
+    Returns a dict with:
+    - "plugin": "malware.hollowprocesses"
+    - "results": list of dicts (one row per suspect process):
+        "PID": process ID (int),
+        "Process": process image name (str),
+        "Notes": human-readable explanation of why the process was
+          flagged (e.g. ImageBase mismatch, VAD protection anomaly,
+          missing on-disk backing) (str)
+
+    Forensic context:
+    - Hollowing creates a process with one image then swaps it for
+      another, so the on-disk EXE name is innocuous but the running
+      code is malicious. Look closely at any process flagged here
+    - Pair with windows_malware_pebmasquerade (PEB spoofing often
+      accompanies hollowing) and windows_pedump(base=..., pid=PID) to
+      recover the actually-running PE for static analysis
+    - Suspended-thread + hollowing is a classic combo: the thread is
+      created suspended, the image swapped, then the thread resumed.
+      Check windows_suspended_threads for the same PID
+    """
+    return session.run_plugin("malware.hollowprocesses", pid=pid)
+
+
+@mcp.tool()
 def windows_consoles(no_registry: bool = False) -> dict:
     """
     Run the consoles plugin to recover console host (conhost.exe /
