@@ -88,14 +88,7 @@ You can then ask follow-up questions to dig deeper:
 
 ## Architecture
 
-```
-Claude Desktop  <-->  MCP Server (stdio)  <-->  volatility3 (Python import)
-                            |
-                         Session
-                            +-- Context (built once, reused)
-                            +-- Config cache ({image}.vol3cfg.json)
-                            +-- Result cache (plugin name -> result)
-```
+![Architecture](png/architecture.png)
 
 A single memory image is fixed per server session. This is intentional -- it ensures all plugin results within a session refer to exactly one memory image, maintaining analytical rigor.
 
