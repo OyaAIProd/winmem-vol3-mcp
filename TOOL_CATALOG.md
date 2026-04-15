@@ -1,8 +1,11 @@
 # Volatility3 Windows Plugin Catalog
 
-All 79 non-deprecated Windows plugins from volatility3 v2.27.0 are
-integrated as MCP tools. The 8 deprecated `PluginRenameClass` wrappers
-intentionally excluded are documented in `plan.md`.
+Volatility3 v2.27.0 ships 91 Windows plugin classes. Of these, 12 are
+deprecated `PluginRenameClass` wrappers that redirect to canonical paths
+already exposed by this server. The remaining **79 canonical plugins** are
+all integrated as MCP tools — 100% non-deprecated coverage. See the
+[Deprecated Alias Audit](#deprecated-alias-audit) section at the bottom
+for the full breakdown.
 
 ## Naming Convention
 
@@ -182,9 +185,9 @@ artifact is universal across supported Windows versions.
 ## Malware Detection
 
 Canonical `windows.malware.*` plugins for advanced rootkit / injection /
-evasion detection. The legacy `windows.*` aliases (drivermodule, ldrmodules,
-malfind, skeleton_key_check) are deprecated `PluginRenameClass` wrappers
-for these and will be removed by the Volatility Foundation on 2026-06-07.
+evasion detection. All 10 legacy `windows.*` aliases that redirect into
+this namespace are deprecated `PluginRenameClass` wrappers excluded from
+this server (see [Deprecated Alias Audit](#deprecated-alias-audit)).
 
 | Volatility3 Plugin | MCP Tool Name | Description |
 |---|---|---|
@@ -199,3 +202,36 @@ for these and will be removed by the Volatility Foundation on 2026-06-07.
 | `windows.malware.pebmasquerade` | `windows_malware_pebmasquerade(pid=0)` | Detect PEB ImageFilePath / CommandLine spoofing |
 | `windows.malware.suspicious_threads` | `windows_malware_suspicious_threads(pid=0)` | Flag userland threads starting in non-image / RWX VADs (injection) |
 | `windows.malware.psxview` | `windows_malware_psxview(physical_offsets=False)` | Cross-view process enumeration (pslist / psscan / thrdscan / csrss) |
+
+---
+
+## Deprecated Alias Audit
+
+Volatility3 v2.27.0 registers **91** Windows plugin classes in total.
+12 of these are `PluginRenameClass` wrappers — thin aliases that emit a
+deprecation warning and delegate to a canonical implementation elsewhere in
+the plugin tree. Every canonical target is already exposed as an MCP tool
+by this server, so the deprecated aliases are intentionally excluded to
+avoid duplicate tools and runtime warnings.
+
+**Summary:** 91 total = **79 canonical (implemented)** + **12 deprecated aliases (excluded)**
+
+| # | Deprecated Alias | Canonical Path (in PLUGIN_MAP) | Removal Date |
+|---|---|---|---|
+| 1 | `windows.drivermodule` | `windows.malware.drivermodule` | 2026-06-07 |
+| 2 | `windows.hollowprocesses` | `windows.malware.hollowprocesses` | 2026-06-07 |
+| 3 | `windows.ldrmodules` | `windows.malware.ldrmodules` | 2026-06-07 |
+| 4 | `windows.malfind` | `windows.malware.malfind` | 2026-06-07 |
+| 5 | `windows.processghosting` | `windows.malware.processghosting` | 2026-06-07 |
+| 6 | `windows.psxview` | `windows.malware.psxview` | 2026-06-07 |
+| 7 | `windows.skeleton_key_check` | `windows.malware.skeleton_key_check` | 2026-06-07 |
+| 8 | `windows.suspicious_threads` | `windows.malware.suspicious_threads` | 2026-06-07 |
+| 9 | `windows.svcdiff` | `windows.malware.svcdiff` | 2026-06-07 |
+| 10 | `windows.unhooked_system_calls` | `windows.malware.unhooked_system_calls` | 2026-06-07 |
+| 11 | `windows.amcache` | `windows.registry.amcache` | 2026-09-25 |
+| 12 | `windows.scheduled_tasks` | `windows.registry.scheduled_tasks` | 2026-09-25 |
+
+- **10 aliases** redirect into `windows.malware.*` (removal: 2026-06-07)
+- **2 aliases** redirect into `windows.registry.*` (removal: 2026-09-25)
+- After these removal dates, the Volatility Foundation will delete the
+  wrapper classes entirely; this server is already forward-compatible.

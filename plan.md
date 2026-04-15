@@ -25,30 +25,35 @@ correlation-tool pattern, and exercises the existing
 in volatility3 v2.27.0 are integrated as MCP tools. The v2.7.0 baseline of
 49 plugins was extended by 30 new tools (34 fresh plugins minus 4 already
 shipped under their canonical `windows_malware_*` names during the rename
-audit). The 8 deprecated `PluginRenameClass` wrappers (`removal_date`
+audit). **12 deprecated `PluginRenameClass` wrappers** (`removal_date`
 2026-06-07 / 2026-09-25) were intentionally excluded so the MCP surface
-exposes only canonical paths.
+exposes only canonical paths. (Total in vol3: 91 classes = 79 canonical +
+12 deprecated aliases.)
 
-Original investigation found 42 new plugins after the v2.27.0 upgrade;
-**8 turned out to be deprecated wrappers** redirecting to canonical
-implementations elsewhere — excluded to avoid duplicate MCP tools and
-deprecation warnings. Effective new total implemented: **34 plugins**.
+*Correction (2026-04-15):* The original audit recorded 8 deprecated
+wrappers. A full re-enumeration of all 91 `windows.*` plugin classes
+confirmed **12** — the 4 that were already migrated from `windows.*` to
+`windows.malware.*` during the rename audit (drivermodule, ldrmodules,
+malfind, skeleton_key_check) had not been counted as excluded wrappers
+even though their old `windows.*` aliases still exist as
+`PluginRenameClass` entries in vol3.
 
 Deprecated wrappers dropped (kept only under their canonical path):
-- `windows.suspicious_threads` → canonical `windows.malware.suspicious_threads`
-- `windows.psxview` → canonical `windows.malware.psxview`
-- `windows.hollowprocesses` → canonical `windows.malware.hollowprocesses`
-- `windows.processghosting` → canonical `windows.malware.processghosting`
-- `windows.svcdiff` → canonical `windows.malware.svcdiff`
-  (already in Malware category; Service duplicate dropped)
-- `windows.scheduled_tasks` → canonical `windows.registry.scheduled_tasks`
-  (this deprecated alias is redundant with the registry.* version already
-  in the plan; expose only the canonical path)
-- `windows.amcache` → canonical `windows.registry.amcache`
-  (same duplicate-alias pattern; only expose the registry.* canonical)
-- `windows.unhooked_system_calls` → canonical
-  `windows.malware.unhooked_system_calls` (already in the Malware category;
-  Kernel duplicate dropped)
+
+| # | Deprecated Alias | Canonical (in PLUGIN_MAP) | Removal Date |
+|---|---|---|---|
+| 1 | `windows.drivermodule` | `windows.malware.drivermodule` | 2026-06-07 |
+| 2 | `windows.hollowprocesses` | `windows.malware.hollowprocesses` | 2026-06-07 |
+| 3 | `windows.ldrmodules` | `windows.malware.ldrmodules` | 2026-06-07 |
+| 4 | `windows.malfind` | `windows.malware.malfind` | 2026-06-07 |
+| 5 | `windows.processghosting` | `windows.malware.processghosting` | 2026-06-07 |
+| 6 | `windows.psxview` | `windows.malware.psxview` | 2026-06-07 |
+| 7 | `windows.skeleton_key_check` | `windows.malware.skeleton_key_check` | 2026-06-07 |
+| 8 | `windows.suspicious_threads` | `windows.malware.suspicious_threads` | 2026-06-07 |
+| 9 | `windows.svcdiff` | `windows.malware.svcdiff` | 2026-06-07 |
+| 10 | `windows.unhooked_system_calls` | `windows.malware.unhooked_system_calls` | 2026-06-07 |
+| 11 | `windows.amcache` | `windows.registry.amcache` | 2026-09-25 |
+| 12 | `windows.scheduled_tasks` | `windows.registry.scheduled_tasks` | 2026-09-25 |
 
 New plugins by category (34 total):
 

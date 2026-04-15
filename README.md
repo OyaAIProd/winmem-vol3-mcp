@@ -68,7 +68,7 @@ You can then ask follow-up questions to dig deeper:
 
 ## Available Tools
 
-79 Windows plugins from Volatility3 v2.27.0 (`volatility3.plugins.windows.*`) are integrated as MCP tools, covering every non-deprecated plugin in the framework's Windows tree. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference; `plan.md` documents the 8 deprecated `PluginRenameClass` wrappers that were intentionally excluded.
+Volatility3 v2.27.0 ships 91 Windows plugin classes (`volatility3.plugins.windows.*`). Of these, 12 are deprecated `PluginRenameClass` wrappers that simply redirect to a canonical path already exposed by this server. The remaining **79 canonical plugins** are all integrated as MCP tools -- 100% non-deprecated coverage. See [TOOL_CATALOG.md](TOOL_CATALOG.md) for the complete reference including the deprecated-alias audit table.
 
 | Category | Plugins |
 |---|---|
